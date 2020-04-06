@@ -96,7 +96,7 @@ def fraction_majority_correct(sorted_expertise_levels:list, num_of_decisions:int
     return num_majority_correct / num_of_decisions
 
 
-def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:list, expertise_means:list, expertise_stds:list, num_of_decisions:int=100):
+def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:list, expertise_means:list, expertise_stds:list, num_of_decisions:int=2):
     """
     Run an experiment with voters of different expertise level.
 
@@ -142,7 +142,8 @@ axesFontSize = 10
 markerSize=12
 style="g-o"
 
-def plot_vs_std(results_csv_file:str, num_of_voterss:list, expertise_means:list, expertise_stds:list):
+def plot_vs_std(results_csv_file:str, column: str, num_of_voterss:list, expertise_means:list, expertise_stds:list):
+    plt.figure()
     results = pandas.read_csv(results_csv_file)
 
     for index,num_of_voters in enumerate(num_of_voterss):
@@ -155,7 +156,7 @@ def plot_vs_std(results_csv_file:str, num_of_voterss:list, expertise_means:list,
         for expertise_mean in expertise_means:
             results_for_mean = results_for_voters.loc[results_for_voters['mean']==expertise_mean]
             x_values = results_for_mean['std']
-            y_values = results_for_mean['minority_decisive']
+            y_values = results_for_mean[column]
             ax.plot(x_values, y_values, markersize=markerSize, label="mean={}".format(expertise_mean))
             ax.plot(x_values, [0.5]*len(x_values), color="black", label="")
             # plt.yticks([0,0.2,0.4,0.6,0.8,1], fontsize=axesFontSize)
@@ -165,10 +166,11 @@ def plot_vs_std(results_csv_file:str, num_of_voterss:list, expertise_means:list,
         # the_legend.set_bbox_to_anchor([1.3,0.7])
 
     plt.xticks(x_values.tolist(), fontsize=axesFontSize)
-    plt.show()
+    plt.draw()
 
 
-def plot_vs_mean(results_csv_file:str, num_of_voterss:list, expertise_means:list, expertise_stds:list):
+def plot_vs_mean(results_csv_file:str, column: str, num_of_voterss:list, expertise_means:list, expertise_stds:list):
+    plt.figure()
     results = pandas.read_csv(results_csv_file)
 
     for index,num_of_voters in enumerate(num_of_voterss):
@@ -181,7 +183,7 @@ def plot_vs_mean(results_csv_file:str, num_of_voterss:list, expertise_means:list
         for expertise_std in expertise_stds:
             results_for_std = results_for_voters.loc[results_for_voters['std']==expertise_std]
             x_values = results_for_std['mean']
-            y_values = results_for_std['minority_decisive']
+            y_values = results_for_std[column]
             ax.plot(x_values, y_values, markersize=markerSize, label="std={}".format(expertise_std))
             ax.plot(x_values, [0.5]*len(x_values), color="black", label="")
             # plt.yticks([0,0.2,0.4,0.6,0.8,1], fontsize=axesFontSize)
@@ -191,7 +193,7 @@ def plot_vs_mean(results_csv_file:str, num_of_voterss:list, expertise_means:list
         # the_legend.set_bbox_to_anchor([1.3,0.7])
 
     plt.xticks(x_values.tolist(), fontsize=axesFontSize)
-    plt.show()
+    plt.draw()
 
 
 if __name__ == "__main__":
@@ -202,16 +204,19 @@ if __name__ == "__main__":
     num_of_iterations = 1000
     num_of_voterss  = [5, 7, 9, 11]
     expertise_means = [.55, .6, .65, .7, .75, .8, .85, .9, .95]
-    expertise_stds  = np.linspace(start=0.001, stop=0.2, num=200)
+    expertise_stds  = np.arange(start=0.002, stop=0.2, step=0.002)
+    # print(expertise_stds)
 
-    results_file="results/voting-1000iters-minority.csv"
+    results_file="results/voting-1000iters.csv"
     # create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
-    # plot_vs_std(results_file, num_of_voterss, expertise_means, expertise_stds)
-    plt.figure(1)
-    plot_vs_mean(results_file, num_of_voterss, expertise_means, expertise_stds=[0.001, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05])
-    plt.figure(2)
-    plot_vs_std(results_file, num_of_voterss, expertise_means, expertise_stds)
+    plot_vs_mean(results_file, "minority_decisive", num_of_voterss, expertise_means, expertise_stds=[0.002, 0.006, 0.01, 0.02, 0.03, 0.04, 0.05])
+    plot_vs_std(results_file, "minority_decisive", num_of_voterss, expertise_means, expertise_stds)
+    plot_vs_mean(results_file, "majority_correct", num_of_voterss, expertise_means, expertise_stds=[0.002, 0.006, 0.01, 0.02, 0.03, 0.04, 0.05])
+    plot_vs_std(results_file, "majority_correct", num_of_voterss, expertise_means, expertise_stds)
 
     # results_file="results/voting-1000iters-majority.csv"
     # create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
     # plot_vs_std(results_file, num_of_voterss, expertise_means, expertise_stds)
+
+
+    plt.show()
