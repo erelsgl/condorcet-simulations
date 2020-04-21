@@ -29,7 +29,7 @@ logger.setLevel(logging.INFO)
 
 
 TABLE_COLUMNS = ["iterations","voters", "mean", "std",
-                 "minority_decisive", "minority_tyrannic", "expert_decisive",
+                 "majority_decisive", "minority_decisive", "minority_tyrannic", "expert_decisive",
                  "majority_correct", "expert_correct"]
 
 def random_expertise_levels(mean:float, std:float, size:int):
@@ -211,17 +211,18 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
                 minority_size = int((num_of_voters-1)/2)
                 for _ in range(num_of_iterations):
                     expertise_levels = random_expertise_levels(expertise_mean, expertise_std, num_of_voters)
-                    # minority_decisive_sum += is_minority_decisive(expertise_levels, minority_size=minority_size)
+                    minority_decisive_sum += is_minority_decisive(expertise_levels, minority_size=minority_size)
                     minority_tyrannic_sum += is_minority_tyrannic(expertise_levels)
-                    # expert_decisive_sum += is_minority_decisive(expertise_levels, minority_size=1)
-                    # majority_correct_sum  += fraction_majority_correct(expertise_levels, num_of_decisions=num_of_decisions)
-                    # expert_correct_sum  += fraction_expert_correct(expertise_levels, num_of_decisions=num_of_decisions)
+                    expert_decisive_sum += is_minority_decisive(expertise_levels, minority_size=1)
+                    majority_correct_sum  += fraction_majority_correct(expertise_levels, num_of_decisions=num_of_decisions)
+                    expert_correct_sum  += fraction_expert_correct(expertise_levels, num_of_decisions=num_of_decisions)
 
                 results_table.add(OrderedDict((
                     ("iterations", num_of_iterations),
                     ("voters", num_of_voters),
                     ("mean", expertise_mean),
                     ("std", expertise_std),
+                    ("majority_decisive", 1-minority_decisive_sum/num_of_iterations),
                     ("minority_decisive", minority_decisive_sum/num_of_iterations),
                     ("minority_tyrannic", minority_tyrannic_sum/num_of_iterations),
                     ("expert_decisive", expert_decisive_sum/num_of_iterations),
@@ -296,9 +297,12 @@ if __name__ == "__main__":
     expertise_means = [.55, .6, .65, .7, .75, .8, .85, .9, .95]
     expertise_stds  = np.arange(start=0.002, stop=0.2, step=0.002)
 
-    results_file="results/voting-1000iters-tyrannic.csv"
+    # results_file="results/voting-1000iters-tyrannic.csv"
+    # create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
+    # plot_vs_mean(results_file, "minority_tyrannic", num_of_voterss, expertise_means, expertise_stds=[0.002, 0.006, 0.01, 0.02, 0.03, 0.04, 0.05], line_at_half=False)
+    # plot_vs_std(results_file, "minority_tyrannic", num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
+
+    results_file="results/voting-1000iters-tyrannic-all.csv"
     create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
-    plot_vs_mean(results_file, "minority_tyrannic", num_of_voterss, expertise_means, expertise_stds=[0.002, 0.006, 0.01, 0.02, 0.03, 0.04, 0.05], line_at_half=True)
-    plot_vs_std(results_file, "minority_tyrannic", num_of_voterss, expertise_means, expertise_stds, line_at_half=True)
 
     plt.show()
