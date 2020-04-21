@@ -69,6 +69,8 @@ def is_minority_decisive(sorted_expertise_levels:list, minority_size:int=None)->
     True
     >>> is_minority_decisive(np.array([0.9, 0.9, 0.6, 0.6, 0.6]), minority_size=1)
     False
+    >>> is_minority_decisive(np.array([0.99, 0.9, 0.6, 0.6, 0.6]), minority_size=1)
+    True
     >>> is_minority_decisive(np.array([0.9, 0.9, 0.6, 0.6, 0.6]), minority_size=3)
     True
     """
@@ -87,8 +89,6 @@ def is_minority_tyrannic(sorted_expertise_levels:list)->bool:
     :return: whether the minority of experts is tyrannic in the optimal decision rule.
     "tyrannic" means that the decision is accepted only by a vote within the minority, ignoring the majority altogether.
     NOTE: that "tyrannic" implies "decisive", but not vice-versa.
-    >>> is_minority_tyrannic(np.array([0.8]))
-    False
     >>> is_minority_tyrannic(np.array([0.8, 0.8, 0.8]))
     False
     >>> is_minority_tyrannic(np.array([0.9, 0.6, 0.6]))
@@ -96,6 +96,10 @@ def is_minority_tyrannic(sorted_expertise_levels:list)->bool:
     >>> is_minority_tyrannic(np.array([0.8, 0.8, 0.8, 0.8, 0.8]))
     False
     >>> is_minority_tyrannic(np.array([0.9, 0.9, 0.6, 0.6, 0.6]))
+    False
+    >>> is_minority_tyrannic(np.array([0.99, 0.99, 0.6, 0.6, 0.6]))
+    False
+    >>> is_minority_tyrannic(np.array([0.99, 0.9, 0.6, 0.6, 0.6]))
     True
     """
     committee_size = len(sorted_expertise_levels)
@@ -109,14 +113,12 @@ def is_minority_tyrannic(sorted_expertise_levels:list)->bool:
         rule_111_0000_optimal = weights[1]+weights[2] > half_total_weight
         return rule_100_0000_optimal or rule_111_0000_optimal
     elif committee_size <= 9:  # minority size = 4.
-        # [(1,0,0,0),(0,0,0,0,0)] and [(1,1,1,0),(0,0,0,0,0)] and [(2,1,1,1),(0,0,0,0,0)].
         rule_1000_00000_optimal = weights[0] > half_total_weight
         rule_1110_00000_optimal = weights[1] + weights[2] > half_total_weight
         rule_2111_00000_optimal = (weights[0] + weights[3] > half_total_weight) \
                                   or (weights[1] + weights[2] + weights[3] > half_total_weight)
         return rule_1000_00000_optimal or rule_1110_00000_optimal or rule_2111_00000_optimal
     elif committee_size <= 11:  # minority size = 5.
-        # [(1,0,0,0),(0,0,0,0,0)] and [(1,1,1,0),(0,0,0,0,0)] and [(2,1,1,1),(0,0,0,0,0)].
         rule_10000_000000_optimal = weights[0] > half_total_weight
         rule_11100_000000_optimal = weights[1] + weights[2] > half_total_weight
         rule_11111_000000_optimal = weights[2] + weights[3] + weights[4] > half_total_weight
