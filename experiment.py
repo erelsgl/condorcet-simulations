@@ -29,8 +29,9 @@ logger.setLevel(logging.INFO)
 
 
 TABLE_COLUMNS = ["iterations","voters", "mean", "std",
-                 "majority_decisive", "minority_decisive", "minority_tyrannic", "expert_decisive",
-                 "majority_correct", "expert_correct"]
+                 "simple_majority_optimal", "minority_decisive_optimal_optimal", "minority_tyranny_optimal", "expert_tyranny_optimal",
+                 "minority_colluding", "majority_correct", "expert_correct"]
+
 
 def random_expertise_levels(mean:float, std:float, size:int):
     """
@@ -52,26 +53,26 @@ def random_expertise_levels(mean:float, std:float, size:int):
 def logodds(expertise_level: float):
     return np.log( expertise_level  / (1-expertise_level))
 
-def is_minority_decisive(sorted_expertise_levels:list, minority_size:int=None)->bool:
+def is_minority_decisive_optimal(sorted_expertise_levels:list, minority_size:int=None)->bool:
     """
     :param sorted_expertise_levels: a list of expertise-levels (numbers in [0.5,1]), sorted from high to low.
     :return: whether the minority of experts is decisive in the optimal decision rule.
     "decisive" means that, if ALL members of minority agree, then their opinion is accepted.
-    >>> is_minority_decisive(np.array([0.8]))
+    >>> is_minority_decisive_optimal(np.array([0.8]))
     False
-    >>> is_minority_decisive(np.array([0.8, 0.8, 0.8]))
+    >>> is_minority_decisive_optimal(np.array([0.8, 0.8, 0.8]))
     False
-    >>> is_minority_decisive(np.array([0.9, 0.6, 0.6]))
+    >>> is_minority_decisive_optimal(np.array([0.9, 0.6, 0.6]))
     True
-    >>> is_minority_decisive(np.array([0.8, 0.8, 0.8, 0.8, 0.8]))
+    >>> is_minority_decisive_optimal(np.array([0.8, 0.8, 0.8, 0.8, 0.8]))
     False
-    >>> is_minority_decisive(np.array([0.9, 0.9, 0.6, 0.6, 0.6]))
+    >>> is_minority_decisive_optimal(np.array([0.9, 0.9, 0.6, 0.6, 0.6]))
     True
-    >>> is_minority_decisive(np.array([0.9, 0.9, 0.6, 0.6, 0.6]), minority_size=1)
+    >>> is_minority_decisive_optimal(np.array([0.9, 0.9, 0.6, 0.6, 0.6]), minority_size=1)
     False
-    >>> is_minority_decisive(np.array([0.99, 0.9, 0.6, 0.6, 0.6]), minority_size=1)
+    >>> is_minority_decisive_optimal(np.array([0.99, 0.9, 0.6, 0.6, 0.6]), minority_size=1)
     True
-    >>> is_minority_decisive(np.array([0.9, 0.9, 0.6, 0.6, 0.6]), minority_size=3)
+    >>> is_minority_decisive_optimal(np.array([0.9, 0.9, 0.6, 0.6, 0.6]), minority_size=3)
     True
     """
     if minority_size is None:
@@ -83,23 +84,23 @@ def is_minority_decisive(sorted_expertise_levels:list, minority_size:int=None)->
     return minority_weight > half_total_weight
 
 
-def is_minority_tyrannic(sorted_expertise_levels:list)->bool:
+def is_meritocracy_optimal(sorted_expertise_levels:list)->bool:
     """
     :param sorted_expertise_levels: a list of expertise-levels (numbers in [0.5,1]), sorted from high to low.
     :return: whether the minority of experts is tyrannic in the optimal decision rule.
     "tyrannic" means that the decision is accepted only by a vote within the minority, ignoring the majority altogether.
     NOTE: that "tyrannic" implies "decisive", but not vice-versa.
-    >>> is_minority_tyrannic(np.array([0.8, 0.8, 0.8]))
+    >>> is_meritocracy_optimal(np.array([0.8, 0.8, 0.8]))
     False
-    >>> is_minority_tyrannic(np.array([0.9, 0.6, 0.6]))
+    >>> is_meritocracy_optimal(np.array([0.9, 0.6, 0.6]))
     True
-    >>> is_minority_tyrannic(np.array([0.8, 0.8, 0.8, 0.8, 0.8]))
+    >>> is_meritocracy_optimal(np.array([0.8, 0.8, 0.8, 0.8, 0.8]))
     False
-    >>> is_minority_tyrannic(np.array([0.9, 0.9, 0.6, 0.6, 0.6]))
+    >>> is_meritocracy_optimal(np.array([0.9, 0.9, 0.6, 0.6, 0.6]))
     False
-    >>> is_minority_tyrannic(np.array([0.99, 0.99, 0.6, 0.6, 0.6]))
+    >>> is_meritocracy_optimal(np.array([0.99, 0.99, 0.6, 0.6, 0.6]))
     False
-    >>> is_minority_tyrannic(np.array([0.99, 0.9, 0.6, 0.6, 0.6]))
+    >>> is_meritocracy_optimal(np.array([0.99, 0.9, 0.6, 0.6, 0.6]))
     True
     """
     committee_size = len(sorted_expertise_levels)
@@ -124,9 +125,13 @@ def is_minority_tyrannic(sorted_expertise_levels:list)->bool:
         rule_11111_000000_optimal = weights[2] + weights[3] + weights[4] > half_total_weight
         rule_21110_000000_optimal = (weights[0] + weights[3] > half_total_weight) \
                                     or (weights[1] + weights[2] + weights[3] > half_total_weight)
-        rule_22111_000000_optimal = weights[2] + weights[3] + weights[4] > half_total_weight
-        rule_32211_000000_optimal = weights[2] + weights[3] + weights[4] > half_total_weight
-        rule_31111_000000_optimal = weights[2] + weights[3] + weights[4] > half_total_weight
+        rule_22111_000000_optimal = (weights[0] + weights[1] > half_total_weight) \
+                                    or (weights[1] + weights[3] + weights[4] > half_total_weight)
+        rule_32211_000000_optimal = (weights[0] + weights[2] > half_total_weight) \
+                                    or (weights[0] + weights[3] + weights[4] > half_total_weight) \
+                                    or (weights[1] + weights[2] + weights[4] > half_total_weight)
+        rule_31111_000000_optimal = (weights[0] + weights[4] > half_total_weight) \
+                                    or (weights[1] + weights[2] + weights[3] + weights[4] > half_total_weight)
         return rule_10000_000000_optimal or rule_11100_000000_optimal or rule_11111_000000_optimal \
                or rule_21110_000000_optimal or rule_22111_000000_optimal or rule_32211_000000_optimal or rule_31111_000000_optimal
     else:
@@ -203,17 +208,17 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
     for num_of_voters in num_of_voterss:
         for expertise_mean in expertise_means:
             for expertise_std in expertise_stds:
-                minority_decisive_sum = 0
-                minority_tyrannic_sum = 0
-                expert_decisive_sum = 0
+                minority_decisive_optimal = 0
+                minority_tyranny_optimal = 0
+                expert_tyranny_optimal_sum = 0
                 majority_correct_sum = 0
                 expert_correct_sum = 0
                 minority_size = int((num_of_voters-1)/2)
                 for _ in range(num_of_iterations):
                     expertise_levels = random_expertise_levels(expertise_mean, expertise_std, num_of_voters)
-                    minority_decisive_sum += is_minority_decisive(expertise_levels, minority_size=minority_size)
-                    minority_tyrannic_sum += is_minority_tyrannic(expertise_levels)
-                    expert_decisive_sum += is_minority_decisive(expertise_levels, minority_size=1)
+                    minority_decisive_optimal += is_minority_decisive_optimal(expertise_levels, minority_size=minority_size)
+                    minority_tyranny_optimal += is_meritocracy_optimal(expertise_levels)
+                    expert_tyranny_optimal_sum += is_minority_decisive_optimal(expertise_levels, minority_size=1)
                     majority_correct_sum  += fraction_majority_correct(expertise_levels, num_of_decisions=num_of_decisions)
                     expert_correct_sum  += fraction_expert_correct(expertise_levels, num_of_decisions=num_of_decisions)
 
@@ -222,10 +227,16 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
                     ("voters", num_of_voters),
                     ("mean", expertise_mean),
                     ("std", expertise_std),
-                    ("majority_decisive", 1-minority_decisive_sum/num_of_iterations),
-                    ("minority_decisive", minority_decisive_sum/num_of_iterations),
-                    ("minority_tyrannic", minority_tyrannic_sum/num_of_iterations),
-                    ("expert_decisive", expert_decisive_sum/num_of_iterations),
+
+                    #  majority rule is optimal iff it is NOT optimal to let colluding minority decide:
+                    ("simple_majority_optimal", (num_of_iterations-minority_decisive_optimal)/num_of_iterations),
+                    ("minority_decisive_optimal",  minority_decisive_optimal / num_of_iterations),
+
+                    #  minority decisiveness is optimal iff colluding minority is optimal but a meritocratic rule is NOT optimal:
+                    ("minority_decisive_not_tyrannic_optimal",  (minority_decisive_optimal - minority_tyranny_optimal) / num_of_iterations),
+                    ("minority_tyranny_optimal", minority_tyranny_optimal/num_of_iterations),
+
+                    ("expert_tyranny_optimal", expert_tyranny_optimal_sum/num_of_iterations),
                     ("majority_correct", majority_correct_sum/num_of_iterations),
                     ("expert_correct", expert_correct_sum/num_of_iterations),
                 )))
@@ -238,6 +249,13 @@ legendFontSize = 8
 axesFontSize = 10
 markerSize=12
 style="g-o"
+
+# TODO: (1) group into ranges:
+# mean:   LOW=0.5-0.66, MEDIUM=0.66-0.82, HIGH:0.82-0.98
+# std:    LOW=0.002-0.064,  MEDIUM=0.066-
+# TODO: (2) add column "probability of collusion"
+
+
 
 def plot_vs_std(results_csv_file:str, column: str, num_of_voterss:list, expertise_means:list, expertise_stds:list, line_at_half:bool=False):
     plt.figure()
@@ -294,15 +312,17 @@ if __name__ == "__main__":
 
     num_of_iterations = 1000
     num_of_voterss  = [5, 7, 9, 11]
-    expertise_means = [.55, .6, .65, .7, .75, .8, .85, .9, .95]
+    expertise_means = [.55, .6, .65,    .7, .75, .8,    .85, .9, .95]
     expertise_stds  = np.arange(start=0.002, stop=0.2, step=0.002)
+    expertise_stds_new  = np.arange(start=0.002, stop=1, step=0.002)
+    # Try also logarithmic scale
 
     # results_file="results/voting-1000iters-tyrannic.csv"
     # create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
-    # plot_vs_mean(results_file, "minority_tyrannic", num_of_voterss, expertise_means, expertise_stds=[0.002, 0.006, 0.01, 0.02, 0.03, 0.04, 0.05], line_at_half=False)
-    # plot_vs_std(results_file, "minority_tyrannic", num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
 
-    results_file="results/voting-1000iters-tyrannic-all.csv"
+    results_file="results/voting-1000iters-optimality.csv"
     create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
+    plot_vs_mean(results_file, "meritocracy_optimal", num_of_voterss, expertise_means, expertise_stds=[0.002, 0.006, 0.01, 0.02, 0.03, 0.04, 0.05], line_at_half=False)
+    plot_vs_std(results_file, "meritocracy_optimal", num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
 
     plt.show()
