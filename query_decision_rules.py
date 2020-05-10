@@ -6,26 +6,32 @@ Since:  2020-04
 Author: Erel Segal-Halevi
 """
 
-def is_minority_decisive_optimal(sorted_expertise_levels:list, minority_size:int=None)->bool:
+import numpy as np
+
+def logodds(expertise_level: float):
+    return np.log( expertise_level  / (1-expertise_level))
+
+
+def is_minority_decisiveness_optimal(sorted_expertise_levels:list, minority_size:int=None)->bool:
     """
     :param sorted_expertise_levels: a list of expertise-levels (numbers in [0.5,1]), sorted from high to low.
     :return: whether the minority of experts is decisive in the optimal decision rule.
     "decisive" means that, if ALL members of minority agree, then their opinion is accepted.
-    >>> is_minority_decisive_optimal(np.array([0.8]))
+    >>> is_minority_decisiveness_optimal(np.array([0.8]))
     False
-    >>> is_minority_decisive_optimal(np.array([0.8, 0.8, 0.8]))
+    >>> is_minority_decisiveness_optimal(np.array([0.8, 0.8, 0.8]))
     False
-    >>> is_minority_decisive_optimal(np.array([0.9, 0.6, 0.6]))
+    >>> is_minority_decisiveness_optimal(np.array([0.9, 0.6, 0.6]))
     True
-    >>> is_minority_decisive_optimal(np.array([0.8, 0.8, 0.8, 0.8, 0.8]))
+    >>> is_minority_decisiveness_optimal(np.array([0.8, 0.8, 0.8, 0.8, 0.8]))
     False
-    >>> is_minority_decisive_optimal(np.array([0.9, 0.9, 0.6, 0.6, 0.6]))
+    >>> is_minority_decisiveness_optimal(np.array([0.9, 0.9, 0.6, 0.6, 0.6]))
     True
-    >>> is_minority_decisive_optimal(np.array([0.9, 0.9, 0.6, 0.6, 0.6]), minority_size=1)
+    >>> is_minority_decisiveness_optimal(np.array([0.9, 0.9, 0.6, 0.6, 0.6]), minority_size=1)
     False
-    >>> is_minority_decisive_optimal(np.array([0.99, 0.9, 0.6, 0.6, 0.6]), minority_size=1)
+    >>> is_minority_decisiveness_optimal(np.array([0.99, 0.9, 0.6, 0.6, 0.6]), minority_size=1)
     True
-    >>> is_minority_decisive_optimal(np.array([0.9, 0.9, 0.6, 0.6, 0.6]), minority_size=3)
+    >>> is_minority_decisiveness_optimal(np.array([0.9, 0.9, 0.6, 0.6, 0.6]), minority_size=3)
     True
     """
     if minority_size is None:
@@ -37,23 +43,23 @@ def is_minority_decisive_optimal(sorted_expertise_levels:list, minority_size:int
     return minority_weight > half_total_weight
 
 
-def is_meritocracy_optimal(sorted_expertise_levels:list)->bool:
+def is_minority_tyranny_optimal(sorted_expertise_levels:list)->bool:
     """
     :param sorted_expertise_levels: a list of expertise-levels (numbers in [0.5,1]), sorted from high to low.
     :return: whether the minority of experts is tyrannic in the optimal decision rule.
     "tyrannic" means that the decision is accepted only by a vote within the minority, ignoring the majority altogether.
     NOTE: that "tyrannic" implies "decisive", but not vice-versa.
-    >>> is_meritocracy_optimal(np.array([0.8, 0.8, 0.8]))
+    >>> is_minority_tyranny_optimal(np.array([0.8, 0.8, 0.8]))
     False
-    >>> is_meritocracy_optimal(np.array([0.9, 0.6, 0.6]))
+    >>> is_minority_tyranny_optimal(np.array([0.9, 0.6, 0.6]))
     True
-    >>> is_meritocracy_optimal(np.array([0.8, 0.8, 0.8, 0.8, 0.8]))
+    >>> is_minority_tyranny_optimal(np.array([0.8, 0.8, 0.8, 0.8, 0.8]))
     False
-    >>> is_meritocracy_optimal(np.array([0.9, 0.9, 0.6, 0.6, 0.6]))
+    >>> is_minority_tyranny_optimal(np.array([0.9, 0.9, 0.6, 0.6, 0.6]))
     False
-    >>> is_meritocracy_optimal(np.array([0.99, 0.99, 0.6, 0.6, 0.6]))
+    >>> is_minority_tyranny_optimal(np.array([0.99, 0.99, 0.6, 0.6, 0.6]))
     False
-    >>> is_meritocracy_optimal(np.array([0.99, 0.9, 0.6, 0.6, 0.6]))
+    >>> is_minority_tyranny_optimal(np.array([0.99, 0.9, 0.6, 0.6, 0.6]))
     True
     """
     committee_size = len(sorted_expertise_levels)
@@ -143,3 +149,37 @@ def fraction_expert_correct(sorted_expertise_levels:list, num_of_decisions:int)-
         num_expert_correct += is_expert_correct
     return num_expert_correct / num_of_decisions
 
+
+def fraction_minority_colluding(sorted_expertise_levels:list, num_of_decisions:int, minority_size:int=None)->float:
+    """
+    :param sorted_expertise_levels: a list of expertise-levels (numbers in [0.5,1]), sorted from high to low.
+    :param num of decisions to make.
+    :return: the empirical fraction of decisions in which the minority of experts agree.
+    >>> fraction_minority_colluding(np.array([0.7, 0.8, 0.9]), 1000)
+    1.0
+    >>> f = fraction_minority_colluding(np.array([0.9, 0.9, 0.9, 0.9, 0.9]), 10000)
+    >>> np.abs(f-0.81-0.01) < 0.05
+    True
+    >>> f = fraction_minority_colluding(np.array([0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9]), 10000)
+    >>> np.abs(f-0.729-0.001) < 0.05
+    True
+    """
+    if minority_size is None:
+        committee_size = len(sorted_expertise_levels)
+        minority_size = int( (committee_size-1)/2 )
+    num_minority_colluding = 0
+    for _ in range(num_of_decisions):
+        expert_vote = (np.random.random() < sorted_expertise_levels[0])
+        is_minority_colluding = True
+        for level in sorted_expertise_levels[1:minority_size]:
+            if (np.random.random() < level)!=expert_vote:
+                is_minority_colluding = False
+                break
+        num_minority_colluding += is_minority_colluding
+    return num_minority_colluding / num_of_decisions
+
+
+if __name__ == "__main__":
+    import doctest
+    (failures,tests) = doctest.testmod(report=True)
+    print ("{} failures, {} tests".format(failures,tests))
