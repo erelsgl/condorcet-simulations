@@ -102,52 +102,110 @@ def is_minority_tyranny_optimal(sorted_expertise_levels:list)->bool:
 
 def fraction_majority_correct(sorted_expertise_levels:list, num_of_decisions:int)->float:
     """
+    Estimate the probability in which the majority rule accepts the correct decision.
+
     :param sorted_expertise_levels: a list of expertise-levels (numbers in [0.5,1]), sorted from high to low.
     :param num of decisions to make
     :return: the empirical fraction of decisions in which the majority rule accepts the correct decision.
-    >>> f08 = fraction_majority_correct(np.array([0.8]), 1000)
-    >>> np.abs(f08-0.8) < 0.05
+    >>> f = fraction_majority_correct(np.array([0.8]), 1000)
+    >>> np.abs(f-0.8) < 0.05
     True
-    >>> f08 = fraction_majority_correct(np.array([0.8, 0.8, 0.8]), 1000)
-    >>> np.abs(f08-0.896) < 0.05
+    >>> f = fraction_majority_correct(np.array([0.8, 0.8, 0.8]), 1000)
+    >>> np.abs(f-0.896) < 0.05
     True
-    >>> f08 = fraction_majority_correct(np.array([0.9, 0.6, 0.6]), 1000)
-    >>> np.abs(f08-.792) < 0.05
+    >>> f = fraction_majority_correct(np.array([0.8, 0.8, 0.8, 0.8, 0.8]), 1000)
+    >>> np.abs(f-0.946) < 0.05
+    True
+    >>> f = fraction_majority_correct(np.array([0.9, 0.6, 0.6]), 1000)
+    >>> np.abs(f-.792) < 0.05
+    True
+    >>> f = fraction_majority_correct(np.array([0.9, 0.9, 0.6, 0.6, 0.6]), 1000)
+    >>> np.abs(f-.854) < 0.05
     True
     """
     committee_size = len(sorted_expertise_levels)
-    num_majority_correct = 0
+    majority_size = int(np.ceil(committee_size/2))
+    num_rule_correct = 0
     for _ in range(num_of_decisions):
         num_correct = 0
         for level in sorted_expertise_levels:
-            is_expert_correct = np.random.random() < level
-            num_correct += is_expert_correct
-        is_majority_correct = 2*num_correct >= committee_size
-        num_majority_correct += is_majority_correct
-    return num_majority_correct / num_of_decisions
+            is_voter_correct = np.random.random() < level
+            num_correct += is_voter_correct
+        is_majority_correct = (num_correct >= majority_size)
+        num_rule_correct += is_majority_correct
+    return num_rule_correct / num_of_decisions
 
 
 def fraction_expert_correct(sorted_expertise_levels:list, num_of_decisions:int)->float:
     """
+    Estimate the probability in which the expert rule accepts the correct decision.
+
     :param sorted_expertise_levels: a list of expertise-levels (numbers in [0.5,1]), sorted from high to low.
     :param num of decisions to make
     :return: the empirical fraction of decisions in which the expert rule accepts the correct decision.
-    >>> f08 = fraction_expert_correct(np.array([0.8]), 1000)
-    >>> np.abs(f08-0.8) < 0.05
+    >>> f = fraction_expert_correct(np.array([0.8]), 1000)
+    >>> np.abs(f-0.8) < 0.05
     True
-    >>> f08 = fraction_expert_correct(np.array([0.8, 0.8, 0.8]), 1000)
-    >>> np.abs(f08-0.8) < 0.05
+    >>> f = fraction_expert_correct(np.array([0.8, 0.8, 0.8]), 1000)
+    >>> np.abs(f-0.8) < 0.05
     True
-    >>> f08 = fraction_expert_correct(np.array([0.9, 0.6, 0.6]), 1000)
-    >>> np.abs(f08-0.9) < 0.05
+    >>> f = fraction_expert_correct(np.array([0.9, 0.6, 0.6]), 1000)
+    >>> np.abs(f-0.9) < 0.05
     True
     """
-    num_expert_correct = 0
+    num_rule_correct = 0
     for _ in range(num_of_decisions):
         level = sorted_expertise_levels[0]
         is_expert_correct = np.random.random() < level
-        num_expert_correct += is_expert_correct
-    return num_expert_correct / num_of_decisions
+        num_rule_correct += is_expert_correct
+    return num_rule_correct / num_of_decisions
+
+
+
+def fraction_compromise_correct(sorted_expertise_levels:list, num_of_decisions:int)->float:
+    """
+    Estimate the probability in which the following decision rule accepts the correct decision:
+        If the minority of experts all agree - accept their opinion;
+        otherwise - accept the majority opinion.
+
+    :param sorted_expertise_levels: a list of expertise-levels (numbers in [0.5,1]), sorted from high to low.
+    :param num of decisions to make
+    :return: the empirical fraction of decisions in which the above-described compromise rule accepts the correct decision.
+    >>> f = fraction_compromise_correct(np.array([0.8, 0.8, 0.8]), 1000)
+    >>> np.abs(f-0.8) < 0.05
+    True
+    >>> f = fraction_compromise_correct(np.array([0.8, 0.8, 0.8, 0.8, 0.8]), 1000)
+    >>> np.abs(f-0.918) < 0.05
+    True
+    >>> f = fraction_compromise_correct(np.array([0.9, 0.6, 0.6]), 1000)
+    >>> np.abs(f-0.9) < 0.05
+    True
+    >>> f = fraction_compromise_correct(np.array([0.9, 0.9, 0.6, 0.6, 0.6]), 1000)
+    >>> np.abs(f-0.918) < 0.05
+    True
+    """
+    committee_size = len(sorted_expertise_levels)
+    minority_size = int((committee_size - 1) / 2)
+    majority_size = committee_size - minority_size
+    num_rule_correct = 0
+    for _ in range(num_of_decisions):
+        num_minority_correct = 0
+        num_correct = 0
+        for level in sorted_expertise_levels[0:minority_size]:
+            is_voter_correct = np.random.random() < level
+            num_minority_correct += is_voter_correct
+            num_correct += is_voter_correct
+        for level in sorted_expertise_levels[minority_size:]:
+            is_voter_correct = np.random.random() < level
+            num_correct += is_voter_correct
+        if num_minority_correct==minority_size: # minority agrees on correct decision
+            is_rule_correct = True
+        elif num_minority_correct==0: # minority agrees on incorrect decision
+            is_rule_correct = False
+        else:
+            is_rule_correct = (num_correct >= majority_size)
+        num_rule_correct += is_rule_correct
+    return num_rule_correct / num_of_decisions
 
 
 def fraction_minority_colluding(sorted_expertise_levels:list, num_of_decisions:int, minority_size:int=None)->float:

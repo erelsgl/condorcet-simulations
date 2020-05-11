@@ -31,12 +31,13 @@ logger.setLevel(logging.INFO)
 
 from query_decision_rules import *
 
-
-TABLE_COLUMNS = ["iterations","voters", "mean", "mean_bucket", "std", "std_bucket",
+REPORTED_COLUMNS = [
                  "simple_majority_optimal", "minority_decisiveness_optimal",
                  "non_tyrannic_minority_decisiveness_optimal",
                  "minority_tyranny_optimal", "expert_tyranny_optimal",
-                 "minority_colluding", "majority_correct", "expert_correct"]
+                 "minority_colluding", "majority_correct", "expert_correct", "compromise_correct"]
+
+TABLE_COLUMNS = ["iterations","voters", "mean", "mean_bucket", "std", "std_bucket"] + REPORTED_COLUMNS
 
 
 def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:list, expertise_means:list, expertise_stds:list, num_of_decisions:int=2):
@@ -64,6 +65,7 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
                 expert_tyranny_optimal_sum = 0
                 majority_correct_sum = 0
                 expert_correct_sum = 0
+                compromise_correct_sum = 0
                 minority_colluding_sum = 0
                 minority_size = int((num_of_voters-1)/2)
                 for _ in range(num_of_iterations):
@@ -73,6 +75,7 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
                     expert_tyranny_optimal_sum += is_minority_decisiveness_optimal(expertise_levels, minority_size=1)
                     majority_correct_sum  += fraction_majority_correct(expertise_levels, num_of_decisions=num_of_decisions)
                     expert_correct_sum  += fraction_expert_correct(expertise_levels, num_of_decisions=num_of_decisions)
+                    compromise_correct_sum += fraction_compromise_correct(expertise_levels, num_of_decisions=num_of_decisions)
                     minority_colluding_sum += fraction_minority_colluding(expertise_levels, minority_size)
 
                 results_table.add(OrderedDict((
@@ -93,6 +96,7 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
                     ("minority_colluding", minority_colluding_sum/num_of_iterations),
                     ("majority_correct", majority_correct_sum/num_of_iterations),
                     ("expert_correct", expert_correct_sum/num_of_iterations),
+                    ("compromise_correct", compromise_correct_sum/num_of_iterations),
                 )))
     results_table.done()
 
@@ -147,15 +151,18 @@ def create_group_results(results_csv_file:str):
     results_mean.to_csv(results_mean_csv_file, index=True)
 
 titleFontSize = 12
-legendFontSize = 8
+legendFontSize = 13
 axesFontSize = 10
 markerSize=12
 style="g-o"
 
-
+figsize=(12, 7)
+dpi=80
+facecolor='w'
+edgecolor='k'
 
 def plot_vs_std(results_csv_file:str, column: str, num_of_voterss:list, expertise_means:list, expertise_stds:list, line_at_half:bool=False):
-    plt.figure()
+    plt.figure(figsize=figsize, dpi=dpi, facecolor=facecolor, edgecolor=edgecolor)
     results = pandas.read_csv(results_csv_file)
 
     for index,num_of_voters in enumerate(num_of_voterss):
@@ -170,16 +177,18 @@ def plot_vs_std(results_csv_file:str, column: str, num_of_voterss:list, expertis
             x_values = results_for_mean['std']
             y_values = results_for_mean[column]
             ax.plot(x_values, y_values, markersize=markerSize, label="mean={}".format(expertise_mean))
-            if line_at_half:
+            if max(y_values)>0.5 or line_at_half:
                 ax.plot(x_values, [0.5]*len(x_values), color="black", label="")
-        ax.legend(prop={'size': legendFontSize}, loc='best')
+        if num_of_voters==11:
+            ax.legend(prop={'size': legendFontSize}, bbox_to_anchor=(2, 1))
 
     plt.xticks(x_values.tolist(), fontsize=axesFontSize)
+    plt.savefig("results/{}_vs_std.png".format(column), format="png")
     plt.draw()
 
 
 def plot_vs_mean(results_csv_file:str, column: str, num_of_voterss:list, expertise_means:list, expertise_stds:list, line_at_half:bool=False):
-    plt.figure()
+    plt.figure(figsize=figsize, dpi=dpi, facecolor=facecolor, edgecolor=edgecolor)
     results = pandas.read_csv(results_csv_file)
 
     for index,num_of_voters in enumerate(num_of_voterss):
@@ -194,11 +203,13 @@ def plot_vs_mean(results_csv_file:str, column: str, num_of_voterss:list, experti
             x_values = results_for_std['mean']
             y_values = results_for_std[column]
             ax.plot(x_values, y_values, markersize=markerSize, label="std={}".format(expertise_std))
-            if line_at_half:
+            if max(y_values)>0.5 or line_at_half:
                 ax.plot(x_values, [0.5]*len(x_values), color="black", label="")
-        ax.legend(prop={'size': legendFontSize}, loc='best')
+        if num_of_voters==11:
+            ax.legend(prop={'size': legendFontSize}, bbox_to_anchor=(2, 1))
 
     plt.xticks(x_values.tolist(), fontsize=axesFontSize)
+    plt.savefig("results/{}_vs_mean.png".format(column))
     plt.draw()
 
 
@@ -207,11 +218,10 @@ if __name__ == "__main__":
     num_of_iterations = 1000
     results_file="results/{}iters-all.csv".format(num_of_iterations)
 
-    # create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
+    create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
     create_group_results(results_file)
 
-    # for field_name in ["minority_tyranny_optimal"]:
-    #     plot_vs_mean(results_file, field_name, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
-    #     plot_vs_std(results_file, "minority_tyranny_optimal", num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
-
-    plt.show()
+    for column in REPORTED_COLUMNS:
+        plot_vs_mean(results_file, column, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
+        plot_vs_std(results_file, column, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
+    # plt.show()
