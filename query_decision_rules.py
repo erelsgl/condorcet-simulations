@@ -7,6 +7,7 @@ Author: Erel Segal-Halevi
 """
 
 import numpy as np
+from powerset import powerset
 
 def logodds(expertise_level: float):
     return np.log( expertise_level  / (1-expertise_level))
@@ -48,7 +49,41 @@ def is_minority_tyranny_optimal(sorted_expertise_levels:list)->bool:
     :param sorted_expertise_levels: a list of expertise-levels (numbers in [0.5,1]), sorted from high to low.
     :return: whether the minority of experts is tyrannic in the optimal decision rule.
     "tyrannic" means that the decision is accepted only by a vote within the minority, ignoring the majority altogether.
-    NOTE: that "tyrannic" implies "decisive", but not vice-versa.
+    NOTE: "tyrannic" implies "decisive", but not vice-versa.
+    >>> is_minority_tyranny_optimal_b(np.array([0.8, 0.8, 0.8]))
+    False
+    >>> is_minority_tyranny_optimal_b(np.array([0.9, 0.6, 0.6]))
+    True
+    >>> is_minority_tyranny_optimal_b(np.array([0.8, 0.8, 0.8, 0.8, 0.8]))
+    False
+    >>> is_minority_tyranny_optimal_b(np.array([0.9, 0.9, 0.6, 0.6, 0.6]))
+    False
+    >>> is_minority_tyranny_optimal_b(np.array([0.99, 0.99, 0.6, 0.6, 0.6]))
+    False
+    >>> is_minority_tyranny_optimal_b(np.array([0.99, 0.9, 0.6, 0.6, 0.6]))
+    True
+    """
+    committee_size = len(sorted_expertise_levels)
+    minority_size = int((committee_size - 1) / 2)
+    weights = logodds(sorted_expertise_levels)
+    minority_weights = weights[0:minority_size]
+    sum_minority_weights = sum(minority_weights)
+    sum_majority_weights = sum(weights[minority_size:])
+    for minority_subset in powerset(minority_weights[1:]):  # Loop over all unordered partitions of the minority
+        weight_difference_in_minority = np.abs(sum_minority_weights - 2*sum(minority_subset))
+        if sum_majority_weights > weight_difference_in_minority:
+            return False # the majority is essential in at least one case
+    return True # the majority is never essential
+
+
+
+
+def is_minority_tyranny_optimal_OLD(sorted_expertise_levels:list)->bool:
+    """
+    :param sorted_expertise_levels: a list of expertise-levels (numbers in [0.5,1]), sorted from high to low.
+    :return: whether the minority of experts is tyrannic in the optimal decision rule.
+    "tyrannic" means that the decision is accepted only by a vote within the minority, ignoring the majority altogether.
+    NOTE: "tyrannic" implies "decisive", but not vice-versa.
     >>> is_minority_tyranny_optimal(np.array([0.8, 0.8, 0.8]))
     False
     >>> is_minority_tyranny_optimal(np.array([0.9, 0.6, 0.6]))
@@ -98,6 +133,7 @@ def is_minority_tyranny_optimal(sorted_expertise_levels:list)->bool:
                or rule_21110_000000_optimal or rule_22111_000000_optimal or rule_32211_000000_optimal or rule_31111_000000_optimal
     else:
         raise ValueError("Committee sizes larger than 11 are not supported")
+
 
 
 def fraction_majority_correct(sorted_expertise_levels:list, num_of_decisions:int)->float:

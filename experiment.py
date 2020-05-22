@@ -12,16 +12,13 @@ Since:  2020-04
 Author: Erel Segal-Halevi
 """
 
-
 from tee_table.tee_table import TeeTable
 from collections import OrderedDict
 import pandas
 import matplotlib.pyplot as plt
 
-import numpy as np
-from query_decision_rules import *
 from random_expertise_levels import random_expertise_levels
-
+from query_decision_rules import *
 
 import logging, sys
 logger = logging.getLogger(__name__)
@@ -29,15 +26,18 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 logger.setLevel(logging.INFO)
 
-from query_decision_rules import *
+INDEX_COLUMNS = ["iterations","voters", "mean", "mean_bucket", "std", "std_bucket"]
 
-REPORTED_COLUMNS = [
+OPTIMALITY_COLUMNS = [
                  "simple_majority_optimal", "minority_decisiveness_optimal",
                  "non_tyrannic_minority_decisiveness_optimal",
-                 "minority_tyranny_optimal", "expert_tyranny_optimal",
-                 "minority_colluding", "majority_correct", "expert_correct", "compromise_correct"]
+                 "minority_tyranny_optimal", "expert_tyranny_optimal", "minority_colluding"]
 
-TABLE_COLUMNS = ["iterations","voters", "mean", "mean_bucket", "std", "std_bucket"] + REPORTED_COLUMNS
+CORRECTNESS_COLUMNS = ["majority_correct", "expert_correct", "compromise_correct"]
+
+REPORTED_COLUMNS = OPTIMALITY_COLUMNS + CORRECTNESS_COLUMNS
+
+TABLE_COLUMNS = INDEX_COLUMNS + REPORTED_COLUMNS
 
 
 def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:list, expertise_means:list, expertise_stds:list, num_of_decisions:int=2):
@@ -125,30 +125,23 @@ def create_group_results(results_csv_file:str):
     results.loc[results.query('std > 0.05').index, "std_bucket"] = "Medium"
     results.loc[results.query('std > 0.09').index, "std_bucket"] = "Upper"
 
-    results_mean = results.groupby(['voters', 'mean_bucket', 'std_bucket']).mean()
+    results_mean = results.groupby(['voters', 'mean_bucket', 'std_bucket']).mean().round(3)
     results_mean.drop(columns=["iterations","mean","std"], inplace=True)
     results_mean.index.names = ["voters", "mean", "std"]
-    results_mean.rename(columns={
-        "simple_majority_optimal": "smr",
-        "minority_decisiveness_optimal": "mino-d",
-        "non_tyrannic_minority_decisiveness_optimal": "n-t-m-d",
-        "minority_tyranny_optimal": "mino-t",
-        "expert_tyranny_optimal": "expert",
-        "minority_colluding": "min-coll",
-    }, inplace=True)
-    results_mean.rename(columns={
-        "mean_bucket":"mean",
-        "std_bucket":"std",
-        "simple_majority_optimal": "smr",
-        "minority_decisiveness_optimal": "mino-d",
-        "non_tyrannic_minority_decisiveness_optimal": "n-t-m-d",
-        "minority_tyranny_optimal": "mino-t",
-        "expert_tyranny_optimal": "expert",
-        "minority_colluding": "min-coll",
-    }, inplace=True)
 
-    results_mean_csv_file = results_csv_file.replace(".csv", "-mean.csv")
-    results_mean.to_csv(results_mean_csv_file, index=True)
+    results_mean\
+        .drop(columns=CORRECTNESS_COLUMNS)\
+        .rename(columns={
+            "simple_majority_optimal": "smr",
+            "minority_decisiveness_optimal": "mino-d",
+            "non_tyrannic_minority_decisiveness_optimal": "n-t-m-d",
+            "minority_tyranny_optimal": "mino-t",
+            "expert_tyranny_optimal": "expert",
+            "minority_colluding": "min-coll"})\
+        .to_csv(results_csv_file.replace(".csv", "-mean-optimal.csv"), index=True)
+    results_mean\
+        .drop(columns=OPTIMALITY_COLUMNS)\
+        .to_csv(results_csv_file.replace(".csv", "-mean-correct.csv"), index=True)
 
 titleFontSize = 12
 legendFontSize = 13
@@ -218,10 +211,10 @@ if __name__ == "__main__":
     num_of_iterations = 1000
     results_file="results/{}iters-all.csv".format(num_of_iterations)
 
-    create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
+    # create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
     create_group_results(results_file)
 
-    for column in REPORTED_COLUMNS:
-        plot_vs_mean(results_file, column, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
-        plot_vs_std(results_file, column, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
+    # for column in REPORTED_COLUMNS:
+    #     plot_vs_mean(results_file, column, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
+    #     plot_vs_std(results_file, column, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
     # plt.show()
