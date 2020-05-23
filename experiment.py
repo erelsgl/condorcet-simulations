@@ -17,8 +17,7 @@ from collections import OrderedDict
 import pandas
 import matplotlib.pyplot as plt
 
-from random_expertise_levels import random_expertise_levels
-from query_decision_rules import *
+from Committee import Committee
 
 import logging, sys
 logger = logging.getLogger(__name__)
@@ -67,16 +66,15 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
                 expert_correct_sum = 0
                 compromise_correct_sum = 0
                 minority_colluding_sum = 0
-                minority_size = int((num_of_voters-1)/2)
                 for _ in range(num_of_iterations):
-                    expertise_levels = random_expertise_levels(expertise_mean, expertise_std, num_of_voters)
-                    minority_decisiveness_optimal += is_minority_decisiveness_optimal(expertise_levels, minority_size=minority_size)
-                    minority_tyranny_optimal += is_minority_tyranny_optimal(expertise_levels)
-                    expert_tyranny_optimal_sum += is_minority_decisiveness_optimal(expertise_levels, minority_size=1)
-                    majority_correct_sum  += fraction_majority_correct(expertise_levels, num_of_decisions=num_of_decisions)
-                    expert_correct_sum  += fraction_expert_correct(expertise_levels, num_of_decisions=num_of_decisions)
-                    compromise_correct_sum += fraction_compromise_correct(expertise_levels, num_of_decisions=num_of_decisions)
-                    minority_colluding_sum += fraction_minority_colluding(expertise_levels, minority_size)
+                    committee = Committee.random_expertise_levels(expertise_mean, expertise_std, num_of_voters)
+                    minority_decisiveness_optimal += committee.is_minority_decisiveness_optimal()
+                    minority_tyranny_optimal += committee.is_minority_tyranny_optimal()
+                    expert_tyranny_optimal_sum += committee.is_minority_decisiveness_optimal(minority_size=1)
+                    majority_correct_sum  += committee.fraction_majority_correct(num_of_decisions=num_of_decisions)
+                    expert_correct_sum  += committee.fraction_expert_correct(num_of_decisions=num_of_decisions)
+                    compromise_correct_sum += committee.fraction_compromise_correct(num_of_decisions=num_of_decisions)
+                    minority_colluding_sum += committee.fraction_minority_colluding(num_of_decisions=num_of_decisions)
 
                 results_table.add(OrderedDict((
                     ("iterations", num_of_iterations),
@@ -209,12 +207,20 @@ def plot_vs_mean(results_csv_file:str, column: str, num_of_voterss:list, experti
 if __name__ == "__main__":
 
     num_of_iterations = 1000
-    results_file="results/{}iters-all.csv".format(num_of_iterations)
+    results_file="results/{}iters-new.csv".format(num_of_iterations)
 
-    # create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
-    create_group_results(results_file)
+    create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
+    # create_group_results(results_file)
 
     # for column in REPORTED_COLUMNS:
     #     plot_vs_mean(results_file, column, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
     #     plot_vs_std(results_file, column, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
     # plt.show()
+
+
+# תוספות
+# 2 באופן כללי הוכחת משפט
+#  הצגת מנה של הסתברויות
+#  הסתברות נכונות של כללי פשרה נוספים: מיעוט עם משקלים, או רק בריחה מטירניות
+#  הסתברות נכונות של הכלל האופטימלי
+#  הסתברות שהכלל האופטימלי נותן משקל אפס למישהו

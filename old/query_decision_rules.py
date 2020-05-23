@@ -2,8 +2,8 @@
 Answer queries regarding the optimal decision rule in various situations.
 
 
-Since:  2020-04
 Author: Erel Segal-Halevi
+Since:  2020-04
 """
 
 import numpy as np
