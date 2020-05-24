@@ -8,6 +8,7 @@ Since:  2020-05
 
 import numpy as np
 from powerset import powerset
+from statistics import mean
 
 class Committee:
     def __init__(self, sorted_expertise_levels:list):
@@ -79,107 +80,181 @@ class Committee:
         return True # the majority is never essential
 
 
-    def fraction_majority_correct(self, num_of_decisions:int)->float:
+    def fraction_of_correct_decisions(self, rule, num_of_decisions:int)->float:
         """
-        Estimate the probability in which the majority rule accepts the correct decision.
+        Estimate the probability in which the given rule accepts the correct decision.
 
-        :param sorted_expertise_levels: a list of expertise-levels (numbers in [0.5,1]), sorted from high to low.
-        :param num of decisions to make
+        :param rule - a function that returns a bool and calculates a random outcome of the rule (True for correct, False for incorrect)
+        :param num_of_decisions - number of times to use the rule for making a decision.
         :return: the empirical fraction of decisions in which the majority rule accepts the correct decision.
-        >>> f = Committee(np.array([0.8])).fraction_majority_correct(1000)
+        """
+        return sum([rule(self) for _ in range(num_of_decisions)]) / num_of_decisions
+
+
+    def optimal_weighted_rule(self)->bool:
+        """
+        Draw opinions at random by the expertise levels, and calculate the decision of the optimal weighted rule.
+        :return: 0 (wrong decision) or 1 (correct decision).
+
+        >>> f = Committee(np.array([0.8])).fraction_of_correct_decisions(Committee.optimal_weighted_rule, 1000)
         >>> np.abs(f-0.8) < 0.05
         True
-        >>> f = Committee(np.array([0.8, 0.8, 0.8])).fraction_majority_correct(1000)
-        >>> np.abs(f-0.896) < 0.05
+        >>> f = Committee(np.array([0.8, 0.8, 0.8])).fraction_of_correct_decisions(Committee.optimal_weighted_rule, 1000)
+        >>> np.abs(f-0.9) < 0.05
         True
-        >>> f = Committee(np.array([0.8, 0.8, 0.8, 0.8, 0.8])).fraction_majority_correct(1000)
-        >>> np.abs(f-0.946) < 0.05
+        >>> f = Committee(np.array([0.8, 0.8, 0.8, 0.8, 0.8])).fraction_of_correct_decisions(Committee.optimal_weighted_rule, 1000)
+        >>> np.abs(f-0.94) < 0.05
         True
-        >>> f = Committee(np.array([0.9, 0.6, 0.6])).fraction_majority_correct(1000)
+        >>> f = Committee(np.array([0.9, 0.6, 0.6])).fraction_of_correct_decisions(Committee.optimal_weighted_rule, 1000)
+        >>> np.abs(f-.9) < 0.05
+        True
+        >>> f = Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).fraction_of_correct_decisions(Committee.optimal_weighted_rule, 1000)
+        >>> np.abs(f-.93) < 0.05
+        True
+        """
+        weight_correct = 0
+        for (level,weight) in zip(self.sorted_expertise_levels,self.weights):
+            is_voter_correct = np.random.random() < level
+            weight_correct += weight*is_voter_correct
+        return (weight_correct >= self.half_total_weight)
+
+
+    def simple_majority_rule(self)->bool:
+        """
+        Draw opinions at random by the expertise levels, and calculate the decision of the majority rule.
+        :return: 0 (wrong decision) or 1 (correct decision).
+
+        >>> f = Committee(np.array([0.8])).fraction_of_correct_decisions(Committee.simple_majority_rule, 1000)
+        >>> np.abs(f-0.8) < 0.05
+        True
+        >>> f = Committee(np.array([0.8, 0.8, 0.8])).fraction_of_correct_decisions(Committee.simple_majority_rule, 1000)
+        >>> np.abs(f-0.9) < 0.05
+        True
+        >>> f = Committee(np.array([0.8, 0.8, 0.8, 0.8, 0.8])).fraction_of_correct_decisions(Committee.simple_majority_rule, 1000)
+        >>> np.abs(f-0.94) < 0.05
+        True
+        >>> f = Committee(np.array([0.9, 0.6, 0.6])).fraction_of_correct_decisions(Committee.simple_majority_rule, 1000)
         >>> np.abs(f-.792) < 0.05
         True
-        >>> f = Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).fraction_majority_correct(1000)
+        >>> f = Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).fraction_of_correct_decisions(Committee.simple_majority_rule, 1000)
         >>> np.abs(f-.854) < 0.05
         True
         """
-        num_rule_correct = 0
-        for _ in range(num_of_decisions):
-            num_correct = 0
-            for level in self.sorted_expertise_levels:
-                is_voter_correct = np.random.random() < level
-                num_correct += is_voter_correct
-            is_majority_correct = (num_correct >= self.majority_size)
-            num_rule_correct += is_majority_correct
-        return num_rule_correct / num_of_decisions
+        num_correct = 0
+        for level in self.sorted_expertise_levels:
+            is_voter_correct = np.random.random() < level
+            num_correct += is_voter_correct
+        return (num_correct >= self.majority_size)
 
 
-    def fraction_expert_correct(self, num_of_decisions:int)->float:
+    def expert_rule(self)->bool:
         """
-        Estimate the probability in which the expert rule accepts the correct decision.
+        Draw opinions at random by the expertise levels, and calculate the decision of the majority rule.
+        :return: 0 (wrong decision) or 1 (correct decision).
 
-        :param sorted_expertise_levels: a list of expertise-levels (numbers in [0.5,1]), sorted from high to low.
-        :param num of decisions to make
-        :return: the empirical fraction of decisions in which the expert rule accepts the correct decision.
-        >>> f = Committee(np.array([0.8])).fraction_expert_correct(1000)
+        >>> f = Committee(np.array([0.8])).fraction_of_correct_decisions(Committee.expert_rule, 1000)
         >>> np.abs(f-0.8) < 0.05
         True
-        >>> f = Committee(np.array([0.8, 0.8, 0.8])).fraction_expert_correct(1000)
+        >>> f = Committee(np.array([0.8, 0.8, 0.8])).fraction_of_correct_decisions(Committee.expert_rule, 1000)
         >>> np.abs(f-0.8) < 0.05
         True
-        >>> f = Committee(np.array([0.9, 0.6, 0.6])).fraction_expert_correct(1000)
+        >>> f = Committee(np.array([0.9, 0.6, 0.6])).fraction_of_correct_decisions(Committee.expert_rule, 1000)
         >>> np.abs(f-0.9) < 0.05
         True
         """
-        num_rule_correct = 0
-        for _ in range(num_of_decisions):
-            level = self.sorted_expertise_levels[0]
-            is_expert_correct = np.random.random() < level
-            num_rule_correct += is_expert_correct
-        return num_rule_correct / num_of_decisions
+        level = self.sorted_expertise_levels[0]
+        return np.random.random() < level
 
-
-
-    def fraction_compromise_correct(self, num_of_decisions:int)->float:
+    def compromise_noweights_rule(self)->bool:
         """
-        Estimate the probability in which the following decision rule accepts the correct decision:
-            If the minority of experts all agree - accept their opinion;
-            otherwise - accept the majority opinion.
+        Draw opinions at random by the expertise levels, and calculate the decision of the compromise rule.
+        :return: 0 (wrong decision) or 1 (correct decision).
 
-        :param sorted_expertise_levels: a list of expertise-levels (numbers in [0.5,1]), sorted from high to low.
-        :param num of decisions to make
-        :return: the empirical fraction of decisions in which the above-described compromise rule accepts the correct decision.
-        >>> f = Committee(np.array([0.8, 0.8, 0.8])).fraction_compromise_correct(1000)
+        >>> f = Committee(np.array([0.8, 0.8, 0.8])).fraction_of_correct_decisions(Committee.compromise_noweights_rule, 1000)
         >>> np.abs(f-0.8) < 0.05
         True
-        >>> f = Committee(np.array([0.8, 0.8, 0.8, 0.8, 0.8])).fraction_compromise_correct(1000)
+        >>> f = Committee(np.array([0.8, 0.8, 0.8, 0.8, 0.8])).fraction_of_correct_decisions(Committee.compromise_noweights_rule, 1000)
         >>> np.abs(f-0.918) < 0.05
         True
-        >>> f = Committee(np.array([0.9, 0.6, 0.6])).fraction_compromise_correct(1000)
+        >>> f = Committee(np.array([0.9, 0.6, 0.6])).fraction_of_correct_decisions(Committee.compromise_noweights_rule, 1000)
         >>> np.abs(f-0.9) < 0.05
         True
-        >>> f = Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).fraction_compromise_correct(1000)
+        >>> f = Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).fraction_of_correct_decisions(Committee.compromise_noweights_rule, 1000)
         >>> np.abs(f-0.918) < 0.05
         True
         """
-        num_rule_correct = 0
-        for _ in range(num_of_decisions):
-            num_minority_correct = 0
-            num_correct = 0
-            for level in self.sorted_expertise_levels[0:self.minority_size]:
-                is_voter_correct = np.random.random() < level
-                num_minority_correct += is_voter_correct
-                num_correct += is_voter_correct
-            for level in self.sorted_expertise_levels[self.minority_size:]:
-                is_voter_correct = np.random.random() < level
-                num_correct += is_voter_correct
-            if num_minority_correct==self.minority_size: # minority agrees on correct decision
-                is_rule_correct = True
-            elif num_minority_correct==0: # minority agrees on incorrect decision
-                is_rule_correct = False
-            else:
-                is_rule_correct = (num_correct >= self.majority_size)
-            num_rule_correct += is_rule_correct
-        return num_rule_correct / num_of_decisions
+        num_correct = 0
+        num_minority_correct = 0
+        for level in self.sorted_expertise_levels[0:self.minority_size]:
+            is_voter_correct = np.random.random() < level
+            num_minority_correct += is_voter_correct
+            num_correct += is_voter_correct
+        for level in self.sorted_expertise_levels[self.minority_size:]:
+            is_voter_correct = np.random.random() < level
+            num_correct += is_voter_correct
+        if num_minority_correct == self.minority_size:  # minority agrees on correct decision
+            return True
+        elif num_minority_correct == 0:  # minority agrees on incorrect decision
+            return False
+        else:
+            return (num_correct >= self.majority_size)
+
+    def compromise_weights_rule(self)->bool:
+        """
+        Draw opinions at random by the expertise levels, and calculate the decision of the compromise rule.
+        :return: 0 (wrong decision) or 1 (correct decision).
+
+        >>> f = Committee(np.array([0.8, 0.8, 0.8])).fraction_of_correct_decisions(Committee.compromise_weights_rule, 1000)
+        >>> np.abs(f-0.9) < 0.05
+        True
+        >>> f = Committee(np.array([0.8, 0.8, 0.8, 0.8, 0.8])).fraction_of_correct_decisions(Committee.compromise_weights_rule, 1000)
+        >>> np.abs(f-0.94) < 0.05
+        True
+        >>> f = Committee(np.array([0.9, 0.6, 0.6])).fraction_of_correct_decisions(Committee.compromise_weights_rule, 1000)
+        >>> np.abs(f-0.9) < 0.05
+        True
+        >>> f = Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).fraction_of_correct_decisions(Committee.compromise_weights_rule, 1000)
+        >>> np.abs(f-0.918) < 0.05
+        True
+        """
+        if sum(self.weights[0:self.minority_size]) > self.half_total_weight:
+            return self.compromise_noweights_rule()
+        else:
+            return self.simple_majority_rule()
+
+
+    def compromise_strongmajority_rule(self)->bool:
+        """
+        Draw opinions at random by the expertise levels, and calculate the decision of a strong-majority compromise rule.
+        :return: 0 (wrong decision) or 1 (correct decision).
+
+        >>> f = Committee(np.array([0.8])).fraction_of_correct_decisions(Committee.compromise_strongmajority_rule, 1000)
+        >>> np.abs(f-0.8) < 0.05
+        True
+        >>> f = Committee(np.array([0.8, 0.8, 0.8])).fraction_of_correct_decisions(Committee.compromise_strongmajority_rule, 1000)
+        >>> np.abs(f-0.9) < 0.05
+        True
+        >>> f = Committee(np.array([0.8, 0.8, 0.8, 0.8, 0.8])).fraction_of_correct_decisions(Committee.compromise_strongmajority_rule, 1000)
+        >>> np.abs(f-0.94) < 0.05
+        True
+        >>> f = Committee(np.array([0.9, 0.6, 0.6])).fraction_of_correct_decisions(Committee.compromise_strongmajority_rule, 1000)
+        >>> np.abs(f-.9) < 0.05
+        True
+        >>> f = Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).fraction_of_correct_decisions(Committee.compromise_strongmajority_rule, 1000)
+        >>> np.abs(f-.93) < 0.05
+        True
+        """
+        num_correct = weight_correct = 0
+        for (level,weight) in zip(self.sorted_expertise_levels,self.weights):
+            is_voter_correct = np.random.random() < level
+            num_correct += is_voter_correct
+            weight_correct += weight*is_voter_correct
+        if num_correct >= self.majority_size+1:  # strong majority correct
+            return True
+        elif num_correct < self.majority_size-1:  # strong majority incorrect
+            return False
+        else:
+            return weight_correct >= self.half_total_weight
 
 
     def fraction_minority_colluding(self, num_of_decisions:int)->float:
@@ -209,6 +284,7 @@ class Committee:
 
 
 
+
 ### UTILITY FUNCTIONS
 
 
@@ -218,7 +294,6 @@ def logodds(expertise_level: float):
 
 
 from scipy.stats import truncnorm
-
 def random_expertise_levels(mean:float, std:float, size:int):
     """
     Draw "size" random expertise levels.
@@ -235,6 +310,8 @@ def random_expertise_levels(mean:float, std:float, size:int):
     a = (lower - loc) / scale
     b = (upper - loc) / scale
     return -np.sort(-truncnorm.rvs(a, b, loc=loc, scale=scale, size=size))
+
+
 
 
 

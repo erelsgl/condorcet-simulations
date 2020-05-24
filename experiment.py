@@ -32,7 +32,7 @@ OPTIMALITY_COLUMNS = [
                  "non_tyrannic_minority_decisiveness_optimal",
                  "minority_tyranny_optimal", "expert_tyranny_optimal", "minority_colluding"]
 
-CORRECTNESS_COLUMNS = ["majority_correct", "expert_correct", "compromise_correct"]
+CORRECTNESS_COLUMNS = ["optimal_correct", "majority_correct", "expert_correct", "compromise_noweights_correct", "compromise_weights_correct", "compromose_strongmajority_correct"]
 
 REPORTED_COLUMNS = OPTIMALITY_COLUMNS + CORRECTNESS_COLUMNS
 
@@ -62,18 +62,27 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
                 minority_decisiveness_optimal = 0
                 minority_tyranny_optimal = 0
                 expert_tyranny_optimal_sum = 0
+                minority_colluding_sum = 0
+
+                optimal_correct_sum = 0
                 majority_correct_sum = 0
                 expert_correct_sum = 0
-                compromise_correct_sum = 0
-                minority_colluding_sum = 0
+                compromise_noweights_correct_sum = 0
+                compromise_weights_correct_sum = 0
+                compromose_strongmajority_correct_sum = 0
                 for _ in range(num_of_iterations):
                     committee = Committee.random_expertise_levels(expertise_mean, expertise_std, num_of_voters)
                     minority_decisiveness_optimal += committee.is_minority_decisiveness_optimal()
                     minority_tyranny_optimal += committee.is_minority_tyranny_optimal()
                     expert_tyranny_optimal_sum += committee.is_minority_decisiveness_optimal(minority_size=1)
-                    majority_correct_sum  += committee.fraction_majority_correct(num_of_decisions=num_of_decisions)
-                    expert_correct_sum  += committee.fraction_expert_correct(num_of_decisions=num_of_decisions)
-                    compromise_correct_sum += committee.fraction_compromise_correct(num_of_decisions=num_of_decisions)
+
+                    optimal_correct_sum  += committee.fraction_of_correct_decisions(Committee.compromise_rule, num_of_decisions)
+                    majority_correct_sum  += committee.fraction_of_correct_decisions(Committee.simple_majority_rule, num_of_decisions)
+                    expert_correct_sum  += committee.fraction_of_correct_decisions(Committee.expert_rule, num_of_decisions)
+                    compromise_noweights_correct_sum  += committee.fraction_of_correct_decisions(Committee.compromise_noweights_rule, num_of_decisions)
+                    compromise_weights_correct_sum  += committee.fraction_of_correct_decisions(Committee.compromise_weights_rule, num_of_decisions)
+                    compromose_strongmajority_correct_sum  += committee.fraction_of_correct_decisions(Committee.compromise_strongmajority_rule, num_of_decisions)
+
                     minority_colluding_sum += committee.fraction_minority_colluding(num_of_decisions=num_of_decisions)
 
                 results_table.add(OrderedDict((
@@ -92,9 +101,13 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
                     ("expert_tyranny_optimal", expert_tyranny_optimal_sum/num_of_iterations),
 
                     ("minority_colluding", minority_colluding_sum/num_of_iterations),
+
+                    ("optimal_correct", optimal_correct_sum/num_of_iterations),
                     ("majority_correct", majority_correct_sum/num_of_iterations),
                     ("expert_correct", expert_correct_sum/num_of_iterations),
-                    ("compromise_correct", compromise_correct_sum/num_of_iterations),
+                    ("compromise_noweights_correct", compromise_noweights_correct_sum/num_of_iterations),
+                    ("compromise_weights_correct", compromise_weights_correct_sum / num_of_iterations),
+                    ("compromose_strongmajority_correct", compromose_strongmajority_correct_sum / num_of_iterations),
                 )))
     results_table.done()
 
@@ -224,3 +237,4 @@ if __name__ == "__main__":
 #  הסתברות נכונות של כללי פשרה נוספים: מיעוט עם משקלים, או רק בריחה מטירניות
 #  הסתברות נכונות של הכלל האופטימלי
 #  הסתברות שהכלל האופטימלי נותן משקל אפס למישהו
+#  הסתברות שההחלטה תואמת לדעת הרוב
