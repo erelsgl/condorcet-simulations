@@ -253,7 +253,7 @@ class Committee:
             return True
         elif num_correct < self.majority_size-1:  # strong majority incorrect
             return False
-        else:
+        else:  # use the optimal rule
             return weight_correct >= self.half_total_weight
 
 
