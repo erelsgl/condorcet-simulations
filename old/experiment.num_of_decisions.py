@@ -10,8 +10,6 @@ or - alternatively - whether it is good to give the minority a decisive power.
 
 Since:  2020-04
 Author: Erel Segal-Halevi
-
-Credits: https://stats.stackexchange.com/q/471426/10760
 """
 
 from tee_table.tee_table import TeeTable
@@ -43,7 +41,7 @@ REPORTED_COLUMNS = OPTIMALITY_COLUMNS + CORRECTNESS_COLUMNS + AGREEMENT_COLUMNS
 TABLE_COLUMNS = INDEX_COLUMNS + REPORTED_COLUMNS
 
 
-def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:list, expertise_means:list, expertise_stds:list, num_of_decisions:int=1):
+def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:list, expertise_means:list, expertise_stds:list, num_of_decisions:int=2):
     """
     Run an experiment with voters of different expertise level.
 
@@ -57,9 +55,6 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
     :param num_of_voters:     how many voters are there in the committee. Should be an odd integer.
     :param expertise_mean:     what is the mean expertise-level  (should be between 0.5 and 1).
     :param expertise_std:      what is the std of the expertise level.
-
-    NOTE: num_decisions is set to 1 based on the answer by Henry:
-            https://stats.stackexchange.com/a/471431/10760
     """
     results_table = TeeTable(TABLE_COLUMNS, results_csv_file)
 
@@ -77,42 +72,20 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
                 compromise_noweights_correct_sum = 0
                 compromise_weights_correct_sum = 0
                 compromose_strongmajority_correct_sum = 0
-
-                optimal_agrees_majority_sum = 0
-                compromise_minority_agrees_majority_sum = 0
-                compromise_minority_agrees_optimal_sum = 0
-                compromose_strongmajority_agrees_majority_sum = 0
-                compromose_strongmajority_agrees_optimal_sum = 0
-
                 for _ in range(num_of_iterations):
                     committee = Committee.random_expertise_levels(expertise_mean, expertise_std, num_of_voters)
                     minority_decisiveness_optimal += committee.is_minority_decisiveness_optimal()
                     minority_tyranny_optimal += committee.is_minority_tyranny_optimal()
                     expert_tyranny_optimal_sum += committee.is_minority_decisiveness_optimal(minority_size=1)
-                    minority_colluding_sum += committee.fraction_minority_colluding(num_of_decisions=1)
 
-                    for _ in range(num_of_decisions):
-                        vote = committee.vote()
+                    optimal_correct_sum  += committee.fraction_of_correct_decisions(Committee.compromise_rule, num_of_decisions)
+                    majority_correct_sum  += committee.fraction_of_correct_decisions(Committee.simple_majority_rule, num_of_decisions)
+                    expert_correct_sum  += committee.fraction_of_correct_decisions(Committee.expert_rule, num_of_decisions)
+                    compromise_noweights_correct_sum  += committee.fraction_of_correct_decisions(Committee.compromise_noweights_rule, num_of_decisions)
+                    compromise_weights_correct_sum  += committee.fraction_of_correct_decisions(Committee.compromise_weights_rule, num_of_decisions)
+                    compromose_strongmajority_correct_sum  += committee.fraction_of_correct_decisions(Committee.compromise_strongmajority_rule, num_of_decisions)
 
-                        optimal_vote  = committee.optimal_weighted_rule(vote)
-                        majority_vote = committee.simple_majority_rule(vote)
-                        expert_vote = committee.expert_rule(vote)
-                        compromise_noweights_vote = committee.compromise_noweights_rule(vote)
-                        compromise_weights_vote = committee.compromise_weights_rule(vote)
-                        compromose_strongmajority_vote = committee.compromise_strongmajority_rule(vote)
-
-                        optimal_correct_sum  += optimal_vote/num_of_decisions
-                        majority_correct_sum += majority_vote/num_of_decisions
-                        expert_correct_sum  += expert_vote/num_of_decisions
-                        compromise_noweights_correct_sum  += compromise_noweights_vote/num_of_decisions
-                        compromise_weights_correct_sum  += compromise_weights_vote/num_of_decisions
-                        compromose_strongmajority_correct_sum  += compromose_strongmajority_vote/num_of_decisions
-
-                        optimal_agrees_majority_sum += (optimal_vote==majority_vote)/num_of_decisions
-                        compromise_minority_agrees_majority_sum += (compromise_weights_vote==majority_vote)/num_of_decisions
-                        compromise_minority_agrees_optimal_sum += (compromise_weights_vote==optimal_vote)/num_of_decisions
-                        compromose_strongmajority_agrees_majority_sum += (compromose_strongmajority_vote==majority_vote)/num_of_decisions
-                        compromose_strongmajority_agrees_optimal_sum += (compromose_strongmajority_vote==optimal_vote)/num_of_decisions
+                    minority_colluding_sum += committee.fraction_minority_colluding(num_of_decisions=num_of_decisions)
 
                 results_table.add(OrderedDict((
                     ("iterations", num_of_iterations),
@@ -131,18 +104,12 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
 
                     ("minority_colluding", minority_colluding_sum/num_of_iterations),
 
-                    ("optimal_correct", optimal_correct_sum / num_of_iterations),
-                    ("majority_correct", majority_correct_sum / num_of_iterations),
-                    ("expert_correct", expert_correct_sum / num_of_iterations),
-                    ("compromise_noweights_correct", compromise_noweights_correct_sum / num_of_iterations),
+                    ("optimal_correct", optimal_correct_sum/num_of_iterations),
+                    ("majority_correct", majority_correct_sum/num_of_iterations),
+                    ("expert_correct", expert_correct_sum/num_of_iterations),
+                    ("compromise_noweights_correct", compromise_noweights_correct_sum/num_of_iterations),
                     ("compromise_weights_correct", compromise_weights_correct_sum / num_of_iterations),
                     ("compromose_strongmajority_correct", compromose_strongmajority_correct_sum / num_of_iterations),
-
-                    ("optimal_agrees_majority", optimal_agrees_majority_sum / num_of_iterations),
-                    ("compromise_minority_agrees_majority", compromise_minority_agrees_majority_sum / num_of_iterations),
-                    ("compromise_minority_agrees_optimal", compromise_minority_agrees_optimal_sum / num_of_iterations),
-                    ("compromose_strongmajority_agrees_majority", compromose_strongmajority_agrees_majority_sum / num_of_iterations),
-                    ("compromose_strongmajority_agrees_optimal", compromose_strongmajority_agrees_optimal_sum / num_of_iterations),
                 )))
     results_table.done()
 
@@ -185,7 +152,6 @@ def create_group_results(results_csv_file:str):
 
     results_mean\
         .drop(columns=CORRECTNESS_COLUMNS)\
-        .drop(columns=AGREEMENT_COLUMNS)\
         .rename(columns={
             "simple_majority_optimal": "smr",
             "minority_decisiveness_optimal": "mino-d",
@@ -196,12 +162,7 @@ def create_group_results(results_csv_file:str):
         .to_csv(results_csv_file.replace(".csv", "-mean-optimal.csv"), index=True)
     results_mean\
         .drop(columns=OPTIMALITY_COLUMNS)\
-        .drop(columns=AGREEMENT_COLUMNS)\
         .to_csv(results_csv_file.replace(".csv", "-mean-correct.csv"), index=True)
-    results_mean\
-        .drop(columns=OPTIMALITY_COLUMNS)\
-        .drop(columns=CORRECTNESS_COLUMNS)\
-        .to_csv(results_csv_file.replace(".csv", "-mean-agreement.csv"), index=True)
 
 titleFontSize = 12
 legendFontSize = 13
@@ -269,22 +230,22 @@ def plot_vs_mean(results_csv_file:str, column: str, num_of_voterss:list, experti
 if __name__ == "__main__":
 
     num_of_iterations = 1000
-    results_file="results/{}iters.csv".format(num_of_iterations)
+    results_file="results/{}iters-new.csv".format(num_of_iterations)
 
-    # create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
+    create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
+    # convert_probabilities_to_odds(results_file)
+    # create_group_results(results_file)
 
-    create_group_results(results_file)
 
-    convert_probabilities_to_odds(results_file)
-    results_file="results/{}iters-odds.csv".format(num_of_iterations)
-    create_group_results(results_file)
-
-    for column in REPORTED_COLUMNS:
-        plot_vs_mean(results_file, column, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
-        plot_vs_std(results_file, column, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
-        plt.close()
+    # results_file="results/{}iters-odds.csv".format(num_of_iterations)
+    # for column in REPORTED_COLUMNS:
+    #     plot_vs_mean(results_file, column, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
+    #     plot_vs_std(results_file, column, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
     # plt.show()
 
 
 # תוספות
+#  הצגת מנה של הסתברויות
 #  הסתברות שהכלל האופטימלי נותן משקל אפס למישהו
+#  הסתברות שההחלטה תואמת לדעת הרוב
+#  הסתברות שההחלטה תואמת לכלל האופטימלי

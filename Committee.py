@@ -23,6 +23,9 @@ class Committee:
     def random_expertise_levels(mean:float, std:float, size:int):
         return Committee(random_expertise_levels(mean, std, size))
 
+
+    ### CHECK WHETHER THE OPTIMAL RULE IS DECISIVE / TYRANIC - BASED ON THE WEIGHTS
+
     def is_minority_decisiveness_optimal(self, minority_size:int=None)->bool:
         """
         :param sorted_expertise_levels: a list of expertise-levels (numbers in [0.5,1]), sorted from high to low.
@@ -80,6 +83,19 @@ class Committee:
         return True # the majority is never essential
 
 
+
+
+    ### CHECK THE FRACTION OF CORRECT DECISIONS - BASED ON THE VOTE
+
+    def vote(self):
+        """
+        Draw opinions at random by the expertise levels.
+        :return: a vector of n votes, one per voter, ordered from most expert to least expert.
+        True means "correct", False means "incorrect".
+        """
+        return [np.random.random() < level for level in self.sorted_expertise_levels]
+
+
     def fraction_of_correct_decisions(self, rule, num_of_decisions:int)->float:
         """
         Estimate the probability in which the given rule accepts the correct decision.
@@ -88,13 +104,12 @@ class Committee:
         :param num_of_decisions - number of times to use the rule for making a decision.
         :return: the empirical fraction of decisions in which the majority rule accepts the correct decision.
         """
-        return sum([rule(self) for _ in range(num_of_decisions)]) / num_of_decisions
+        return sum([rule(self, self.vote()) for _ in range(num_of_decisions)]) / num_of_decisions
 
-
-    def optimal_weighted_rule(self)->bool:
+    def optimal_weighted_rule(self, vote:list)->bool:
         """
-        Draw opinions at random by the expertise levels, and calculate the decision of the optimal weighted rule.
-        :return: 0 (wrong decision) or 1 (correct decision).
+        Calculate the decision of the optimal weighted rule by the given vote.
+        :return: False (wrong decision) or True (correct decision).
 
         >>> f = Committee(np.array([0.8])).fraction_of_correct_decisions(Committee.optimal_weighted_rule, 1000)
         >>> np.abs(f-0.8) < 0.05
@@ -113,13 +128,12 @@ class Committee:
         True
         """
         weight_correct = 0
-        for (level,weight) in zip(self.sorted_expertise_levels,self.weights):
-            is_voter_correct = np.random.random() < level
+        for (is_voter_correct,weight) in zip(vote, self.weights):
             weight_correct += weight*is_voter_correct
         return (weight_correct >= self.half_total_weight)
 
 
-    def simple_majority_rule(self)->bool:
+    def simple_majority_rule(self, vote:list)->bool:
         """
         Draw opinions at random by the expertise levels, and calculate the decision of the majority rule.
         :return: 0 (wrong decision) or 1 (correct decision).
@@ -141,13 +155,11 @@ class Committee:
         True
         """
         num_correct = 0
-        for level in self.sorted_expertise_levels:
-            is_voter_correct = np.random.random() < level
+        for is_voter_correct in vote:
             num_correct += is_voter_correct
         return (num_correct >= self.majority_size)
 
-
-    def expert_rule(self)->bool:
+    def expert_rule(self, vote:list)->bool:
         """
         Draw opinions at random by the expertise levels, and calculate the decision of the majority rule.
         :return: 0 (wrong decision) or 1 (correct decision).
@@ -162,12 +174,12 @@ class Committee:
         >>> np.abs(f-0.9) < 0.05
         True
         """
-        level = self.sorted_expertise_levels[0]
-        return np.random.random() < level
+        return vote[0]
 
-    def compromise_noweights_rule(self)->bool:
+    def compromise_noweights_rule(self, vote:list)->bool:
         """
-        Draw opinions at random by the expertise levels, and calculate the decision of the compromise rule.
+        Draw opinions at random by the expertise levels, and calculate the decision of a compromise rule:
+             The rule accepts the decision of the elite if they agree; otherwise it accepts the decision of the majority.
         :return: 0 (wrong decision) or 1 (correct decision).
 
         >>> f = Committee(np.array([0.8, 0.8, 0.8])).fraction_of_correct_decisions(Committee.compromise_noweights_rule, 1000)
@@ -185,21 +197,19 @@ class Committee:
         """
         num_correct = 0
         num_minority_correct = 0
-        for level in self.sorted_expertise_levels[0:self.minority_size]:
-            is_voter_correct = np.random.random() < level
+        for is_voter_correct in vote[0:self.minority_size]:
             num_minority_correct += is_voter_correct
             num_correct += is_voter_correct
-        for level in self.sorted_expertise_levels[self.minority_size:]:
-            is_voter_correct = np.random.random() < level
+        for is_voter_correct in vote[self.minority_size:]:
             num_correct += is_voter_correct
         if num_minority_correct == self.minority_size:  # minority agrees on correct decision
             return True
         elif num_minority_correct == 0:  # minority agrees on incorrect decision
             return False
-        else:
-            return (num_correct >= self.majority_size)
+        else:                            # minority do not agree
+            return (num_correct >= self.majority_size)   # select the majority decision
 
-    def compromise_weights_rule(self)->bool:
+    def compromise_weights_rule(self, vote:list)->bool:
         """
         Draw opinions at random by the expertise levels, and calculate the decision of the compromise rule.
         :return: 0 (wrong decision) or 1 (correct decision).
@@ -218,12 +228,12 @@ class Committee:
         True
         """
         if sum(self.weights[0:self.minority_size]) > self.half_total_weight:
-            return self.compromise_noweights_rule()
+            return self.compromise_noweights_rule(vote)
         else:
-            return self.simple_majority_rule()
+            return self.simple_majority_rule(vote)
 
 
-    def compromise_strongmajority_rule(self)->bool:
+    def compromise_strongmajority_rule(self, vote:list)->bool:
         """
         Draw opinions at random by the expertise levels, and calculate the decision of a strong-majority compromise rule.
         :return: 0 (wrong decision) or 1 (correct decision).
@@ -245,8 +255,7 @@ class Committee:
         True
         """
         num_correct = weight_correct = 0
-        for (level,weight) in zip(self.sorted_expertise_levels,self.weights):
-            is_voter_correct = np.random.random() < level
+        for (is_voter_correct,weight) in zip(vote, self.weights):
             num_correct += is_voter_correct
             weight_correct += weight*is_voter_correct
         if num_correct >= self.majority_size+1:  # strong majority correct
@@ -319,3 +328,6 @@ if __name__ == "__main__":
     import doctest
     (failures,tests) = doctest.testmod(report=True)
     print ("{} failures, {} tests".format(failures,tests))
+
+
+
