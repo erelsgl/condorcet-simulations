@@ -16,7 +16,7 @@ Credits: https://stats.stackexchange.com/q/471426/10760
 
 from tee_table.tee_table import TeeTable
 from collections import OrderedDict
-import pandas
+import pandas, os.path
 import matplotlib.pyplot as plt
 
 from Committee import Committee
@@ -34,7 +34,7 @@ OPTIMALITY_COLUMNS = [
                  "non_tyrannic_minority_decisiveness_optimal",
                  "minority_tyranny_optimal", "expert_tyranny_optimal", "minority_colluding"]
 
-CORRECTNESS_COLUMNS = ["optimal_correct", "majority_correct", "expert_correct", "compromise_noweights_correct", "compromise_weights_correct", "compromose_strongmajority_correct"]
+CORRECTNESS_COLUMNS = ["optimal_correct", "majority_correct", "expert_correct", "compromise_minority_correct", "compromose_strongmajority_correct"]
 
 AGREEMENT_COLUMNS = ["optimal_agrees_majority", "compromise_minority_agrees_majority", "compromise_minority_agrees_optimal", "compromose_strongmajority_agrees_majority", "compromose_strongmajority_agrees_optimal"]
 
@@ -74,8 +74,7 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
                 optimal_correct_sum = 0
                 majority_correct_sum = 0
                 expert_correct_sum = 0
-                compromise_noweights_correct_sum = 0
-                compromise_weights_correct_sum = 0
+                compromise_minority_correct_sum = 0
                 compromose_strongmajority_correct_sum = 0
 
                 optimal_agrees_majority_sum = 0
@@ -97,20 +96,18 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
                         optimal_vote  = committee.optimal_weighted_rule(vote)
                         majority_vote = committee.simple_majority_rule(vote)
                         expert_vote = committee.expert_rule(vote)
-                        compromise_noweights_vote = committee.compromise_noweights_rule(vote)
-                        compromise_weights_vote = committee.compromise_weights_rule(vote)
+                        compromise_minority_vote = committee.compromise_weights_rule(vote)
                         compromose_strongmajority_vote = committee.compromise_strongmajority_rule(vote)
 
                         optimal_correct_sum  += optimal_vote/num_of_decisions
                         majority_correct_sum += majority_vote/num_of_decisions
                         expert_correct_sum  += expert_vote/num_of_decisions
-                        compromise_noweights_correct_sum  += compromise_noweights_vote/num_of_decisions
-                        compromise_weights_correct_sum  += compromise_weights_vote/num_of_decisions
+                        compromise_minority_correct_sum  += compromise_minority_vote/num_of_decisions
                         compromose_strongmajority_correct_sum  += compromose_strongmajority_vote/num_of_decisions
 
                         optimal_agrees_majority_sum += (optimal_vote==majority_vote)/num_of_decisions
-                        compromise_minority_agrees_majority_sum += (compromise_weights_vote==majority_vote)/num_of_decisions
-                        compromise_minority_agrees_optimal_sum += (compromise_weights_vote==optimal_vote)/num_of_decisions
+                        compromise_minority_agrees_majority_sum += (compromise_minority_vote==majority_vote)/num_of_decisions
+                        compromise_minority_agrees_optimal_sum += (compromise_minority_vote==optimal_vote)/num_of_decisions
                         compromose_strongmajority_agrees_majority_sum += (compromose_strongmajority_vote==majority_vote)/num_of_decisions
                         compromose_strongmajority_agrees_optimal_sum += (compromose_strongmajority_vote==optimal_vote)/num_of_decisions
 
@@ -134,8 +131,7 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
                     ("optimal_correct", optimal_correct_sum / num_of_iterations),
                     ("majority_correct", majority_correct_sum / num_of_iterations),
                     ("expert_correct", expert_correct_sum / num_of_iterations),
-                    ("compromise_noweights_correct", compromise_noweights_correct_sum / num_of_iterations),
-                    ("compromise_weights_correct", compromise_weights_correct_sum / num_of_iterations),
+                    ("compromise_minority_correct", compromise_minority_correct_sum / num_of_iterations),
                     ("compromose_strongmajority_correct", compromose_strongmajority_correct_sum / num_of_iterations),
 
                     ("optimal_agrees_majority", optimal_agrees_majority_sum / num_of_iterations),
@@ -146,17 +142,6 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
                 )))
     results_table.done()
 
-
-num_of_voterss  = [3, 5, 7, 9, 11]
-
-
-expertise_means = [.5, .55, .6,
-                   .7, .75, .8,
-                   .9, .95, 1]
-
-expertise_stds  = [0.02, 0.03, 0.04,
-                   0.06, 0.07, 0.08,
-                   0.10, 0.11, 0.12]
 
 def convert_probabilities_to_odds(results_csv_file:str):
     results = pandas.read_csv(results_csv_file)
@@ -236,7 +221,8 @@ def plot_vs_std(results_csv_file:str, column: str, num_of_voterss:list, expertis
             ax.legend(prop={'size': legendFontSize}, bbox_to_anchor=(2, 1))
 
     plt.xticks(x_values.tolist(), fontsize=axesFontSize)
-    plt.savefig("results/{}_vs_std.png".format(column), format="png")
+    folder, _ = os.path.split(results_csv_file)
+    plt.savefig("{}/{}_vs_std.png".format(folder, column), format="png")
     plt.draw()
 
 
@@ -262,28 +248,66 @@ def plot_vs_mean(results_csv_file:str, column: str, num_of_voterss:list, experti
             ax.legend(prop={'size': legendFontSize}, bbox_to_anchor=(2, 1))
 
     plt.xticks(x_values.tolist(), fontsize=axesFontSize)
-    plt.savefig("results/{}_vs_mean.png".format(column))
+    folder, _ = os.path.split(results_csv_file)
+    plt.savefig("{}/{}_vs_mean.png".format(folder, column))
+    plt.draw()
+
+
+def plot_vs_voters(results_csv_file:str, column: str, num_of_voterss:list, expertise_means:list, expertise_stds:list, line_at_half:bool=False):
+    plt.figure(figsize=figsize, dpi=dpi, facecolor=facecolor, edgecolor=edgecolor)
+    results = pandas.read_csv(results_csv_file)
+
+    for index,expertise_mean in enumerate(expertise_means):
+        results_for_mean = results.loc[results['mean']==expertise_mean]
+        ax = plt.subplot(3, 3, index+1)
+        ax.set_title('mean={}'.format(expertise_mean),
+                     fontsize=titleFontSize, weight='bold')
+        ax.set_xlabel('', fontsize=axesFontSize)
+
+        for expertise_std in expertise_stds:
+            results_for_std = results_for_mean.loc[results_for_mean['std']==expertise_std]
+            x_values = results_for_std['voters']
+            y_values = results_for_std[column]
+            ax.plot(x_values, y_values, markersize=markerSize, label="std={}".format(expertise_std))
+            if max(y_values)>0.5 or line_at_half:
+                ax.plot(x_values, [0.5]*len(x_values), color="black", label="")
+        if expertise_mean==1:
+            ax.legend(prop={'size': legendFontSize}, bbox_to_anchor=(2, 1))
+
+    plt.xticks(x_values.tolist(), fontsize=axesFontSize)
+    folder, _ = os.path.split(results_csv_file)
+    plt.savefig("{}/{}_vs_voters.png".format(folder, column))
     plt.draw()
 
 
 if __name__ == "__main__":
 
+    num_of_voterss = [11, 21, 31, 41, 51]
+
+    expertise_means = [.5, .55, .6,
+                       .7, .75, .8,
+                       .9, .95, 1]
+
+    expertise_stds = [0.02, 0.03, 0.04,
+                      0.06, 0.07, 0.08,
+                      0.10, 0.11, 0.12]
+
     num_of_iterations = 1000
-    results_file="results/{}iters.csv".format(num_of_iterations)
+    results_file="results-manyvoters/{}iters.csv".format(num_of_iterations)
 
     # create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
 
-    create_group_results(results_file)
+    # create_group_results(results_file)
 
-    convert_probabilities_to_odds(results_file)
-    results_file="results/{}iters-odds.csv".format(num_of_iterations)
-    create_group_results(results_file)
+    # convert_probabilities_to_odds(results_file)
+    # results_file="results-manyvoters/{}iters-odds.csv".format(num_of_iterations)
+    # create_group_results(results_file)
 
     for column in REPORTED_COLUMNS:
         plot_vs_mean(results_file, column, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
         plot_vs_std(results_file, column, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
+        plot_vs_voters(results_file, column, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
         plt.close()
-    # plt.show()
 
 
 # תוספות
