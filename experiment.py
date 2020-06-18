@@ -43,7 +43,7 @@ REPORTED_COLUMNS = OPTIMALITY_COLUMNS + CORRECTNESS_COLUMNS + AGREEMENT_COLUMNS
 TABLE_COLUMNS = INDEX_COLUMNS + REPORTED_COLUMNS
 
 
-def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:list, expertise_means:list, expertise_stds:list, num_of_decisions:int=1):
+def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:list, expertise_means:list, expertise_stds:list, num_of_decisions:int=1, debug_committees=False):
     """
     Run an experiment with voters of different expertise level.
 
@@ -85,6 +85,7 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
 
                 for _ in range(num_of_iterations):
                     committee = Committee.random_expertise_levels(expertise_mean, expertise_std, num_of_voters)
+                    if (debug_committees): print(committee)
                     minority_decisiveness_optimal += committee.is_minority_decisiveness_optimal()
                     minority_tyranny_optimal += committee.is_minority_tyranny_optimal()
                     expert_tyranny_optimal_sum += committee.is_minority_decisiveness_optimal(minority_size=1)
@@ -279,36 +280,3 @@ def plot_vs_voters(results_csv_file:str, column: str, num_of_voterss:list, exper
     plt.savefig("{}/{}_vs_voters.png".format(folder, column))
     plt.draw()
 
-
-if __name__ == "__main__":
-
-    num_of_voterss = [11, 21, 31, 41, 51]
-
-    expertise_means = [.5, .55, .6,
-                       .7, .75, .8,
-                       .9, .95, 1]
-
-    expertise_stds = [0.02, 0.03, 0.04,
-                      0.06, 0.07, 0.08,
-                      0.10, 0.11, 0.12]
-
-    num_of_iterations = 1000
-    results_file="results-manyvoters/{}iters.csv".format(num_of_iterations)
-
-    # create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
-
-    # create_group_results(results_file)
-
-    # convert_probabilities_to_odds(results_file)
-    # results_file="results-manyvoters/{}iters-odds.csv".format(num_of_iterations)
-    # create_group_results(results_file)
-
-    for column in REPORTED_COLUMNS:
-        plot_vs_mean(results_file, column, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
-        plot_vs_std(results_file, column, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
-        plot_vs_voters(results_file, column, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
-        plt.close()
-
-
-# תוספות
-#  הסתברות שהכלל האופטימלי נותן משקל אפס למישהו
