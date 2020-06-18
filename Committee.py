@@ -8,7 +8,6 @@ Since:  2020-05
 
 import numpy as np
 from powerset import powerset
-from statistics import mean
 
 class Committee:
     def __init__(self, sorted_expertise_levels:list):
@@ -18,6 +17,10 @@ class Committee:
         self.committee_size = len(sorted_expertise_levels)
         self.minority_size = int(np.floor((self.committee_size - 1) / 2))
         self.majority_size = self.committee_size - self.minority_size
+
+    def __str__(self):
+        return "probabilities: {}\n      weights: {}".format(
+            round3(self.sorted_expertise_levels), round3(self.weights))
 
     @staticmethod
     def random_expertise_levels(mean:float, std:float, size:int):
@@ -77,8 +80,12 @@ class Committee:
         sum_minority_weights = sum(minority_weights)
         sum_majority_weights = sum(self.weights[self.minority_size:])
         for minority_subset in powerset(minority_weights[1:]):  # Loop over all unordered partitions of the minority
-            weight_difference_in_minority = np.abs(sum_minority_weights - 2*sum(minority_subset))
+            sum_minority_subset = sum(minority_subset)
+            sum_complement_subset = sum_minority_weights -sum_minority_subset
+            weight_difference_in_minority = np.abs(sum_minority_subset - sum_complement_subset)
             if sum_majority_weights > weight_difference_in_minority:
+                # print("sum_majority_weights={} minority_subset={} sum_minority_subset={} sum_complement_subset={}".
+                #       format(np.round(sum_majority_weights,3),np.round(minority_subset,3),np.round(sum_minority_subset,3),np.round(sum_complement_subset,3)))
                 return False # the majority is essential in at least one case
         return True # the majority is never essential
 
@@ -298,8 +305,17 @@ class Committee:
 
 
 def logodds(expertise_level: float):
+    """
+    >>> logodds(0.5)
+    0.0
+    >>> logodds(np.array([0.001, 0.999]))
+    array([-6.90675478,  6.90675478])
+    """
     return np.log( expertise_level  / (1-expertise_level))
 
+
+def round3(l:list):
+    return [np.round(x,3) for x in l]
 
 
 from scipy.stats import truncnorm
