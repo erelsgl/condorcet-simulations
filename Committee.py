@@ -90,6 +90,38 @@ class Committee:
         return True # the majority is never essential
 
 
+    def is_majority_tyranny_optimal(self)->bool:
+        """
+        :param sorted_expertise_levels: a list of expertise-levels (numbers in [0.5,1]), sorted from high to low.
+        :return: whether the optimal decision rule allows majority tyranny,
+        meaning that some voters have zero weight and do not affect the decision.
+        >>> Committee(np.array([0.8, 0.8, 0.8])).is_majority_tyranny_optimal()
+        False
+        >>> Committee(np.array([0.9, 0.6, 0.6])).is_majority_tyranny_optimal()
+        True
+        >>> Committee(np.array([0.8, 0.8, 0.8, 0.8, 0.8])).is_majority_tyranny_optimal()
+        False
+        >>> Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).is_majority_tyranny_optimal()
+        False
+        >>> Committee(np.array([0.99, 0.99, 0.6, 0.6, 0.6])).is_majority_tyranny_optimal()
+        False
+        >>> Committee(np.array([0.99, 0.9, 0.6, 0.6, 0.6])).is_majority_tyranny_optimal()
+        True
+        """
+        majority_weights = self.weights[0:self.committee_size-1]
+        sum_majority_weights = sum(majority_weights)
+        least_weight = self.weights[-1]
+        for majority_subset in powerset(majority_weights[1:]):  # Loop over all unordered partitions of the minority
+            sum_majority_subset = sum(majority_subset)
+            sum_complement_subset = sum_majority_weights - sum_majority_subset
+            weight_difference_in_majority = np.abs(sum_majority_subset - sum_complement_subset)
+            if least_weight > weight_difference_in_majority:
+                # print("least_weight={} majority_subset={} sum_majority_subset={} sum_complement_subset={}".
+                #       format(np.round(least_weight,3),np.round(majority_subset,3),np.round(sum_majority_subset,3),np.round(sum_complement_subset,3)))
+                return False # the least-weight agent is essential in at least one case
+        return True # the least-weight agent is never essential
+
+
 
 
     ### CHECK THE FRACTION OF CORRECT DECISIONS - BASED ON THE VOTE

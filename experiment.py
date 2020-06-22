@@ -32,7 +32,7 @@ INDEX_COLUMNS = ["iterations","voters", "mean", "mean_bucket", "std", "std_bucke
 OPTIMALITY_COLUMNS = [
                  "simple_majority_optimal", "minority_decisiveness_optimal",
                  "non_tyrannic_minority_decisiveness_optimal",
-                 "minority_tyranny_optimal", "expert_tyranny_optimal", "minority_colluding"]
+                 "majority_tyranny_optimal", "minority_tyranny_optimal", "expert_tyranny_optimal", "minority_colluding"]
 
 CORRECTNESS_COLUMNS = ["optimal_correct", "majority_correct", "expert_correct", "compromise_minority_correct", "compromose_strongmajority_correct"]
 
@@ -67,6 +67,7 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
         for expertise_mean in expertise_means:
             for expertise_std in expertise_stds:
                 minority_decisiveness_optimal = 0
+                majority_tyranny_optimal = 0
                 minority_tyranny_optimal = 0
                 expert_tyranny_optimal_sum = 0
                 minority_colluding_sum = 0
@@ -87,6 +88,7 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
                     committee = Committee.random_expertise_levels(expertise_mean, expertise_std, num_of_voters)
                     if (debug_committees): print(committee)
                     minority_decisiveness_optimal += committee.is_minority_decisiveness_optimal()
+                    majority_tyranny_optimal += committee.is_majority_tyranny_optimal()
                     minority_tyranny_optimal += committee.is_minority_tyranny_optimal()
                     expert_tyranny_optimal_sum += committee.is_minority_decisiveness_optimal(minority_size=1)
                     minority_colluding_sum += committee.fraction_minority_colluding(num_of_decisions=1)
@@ -124,6 +126,7 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
 
                     #  minority decisiveness is optimal iff colluding minority is optimal but a meritocratic rule is NOT optimal:
                     ("non_tyrannic_minority_decisiveness_optimal",  (minority_decisiveness_optimal - minority_tyranny_optimal) / num_of_iterations),
+                    ("majority_tyranny_optimal", majority_tyranny_optimal/num_of_iterations),
                     ("minority_tyranny_optimal", minority_tyranny_optimal/num_of_iterations),
                     ("expert_tyranny_optimal", expert_tyranny_optimal_sum/num_of_iterations),
 
@@ -176,6 +179,7 @@ def create_group_results(results_csv_file:str):
             "simple_majority_optimal": "smr",
             "minority_decisiveness_optimal": "mino-d",
             "non_tyrannic_minority_decisiveness_optimal": "n-t-m-d",
+            "majority_tyranny_optimal": "majo-t",
             "minority_tyranny_optimal": "mino-t",
             "expert_tyranny_optimal": "expert",
             "minority_colluding": "min-coll"})\

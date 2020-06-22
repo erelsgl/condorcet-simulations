@@ -122,7 +122,7 @@ expertise_stds = [0.02, 0.03, 0.04,
                   0.10, 0.11, 0.12]
 
 
-# create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
+create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
 create_group_results(results_file)
 for column in REPORTED_COLUMNS:
     plot_vs_mean(results_file, column, num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
