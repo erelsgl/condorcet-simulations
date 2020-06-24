@@ -88,8 +88,10 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
                     committee = Committee.random_expertise_levels(expertise_mean, expertise_std, num_of_voters)
                     if (debug_committees): print(committee)
                     minority_decisiveness_optimal += committee.is_minority_decisiveness_optimal()
-                    majority_tyranny_optimal += committee.is_majority_tyranny_optimal()
-                    minority_tyranny_optimal += committee.is_minority_tyranny_optimal()
+                    if (num_of_voters<=21):
+                        majority_tyranny_optimal += committee.is_majority_tyranny_optimal()
+                    if (num_of_voters<=51):
+                        minority_tyranny_optimal += committee.is_minority_tyranny_optimal()
                     expert_tyranny_optimal_sum += committee.is_minority_decisiveness_optimal(minority_size=1)
                     minority_colluding_sum += committee.fraction_minority_colluding(num_of_decisions=1)
 
