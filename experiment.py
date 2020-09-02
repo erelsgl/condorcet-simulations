@@ -17,7 +17,6 @@ Credits: https://stats.stackexchange.com/q/471426/10760
 from tee_table.tee_table import TeeTable
 from collections import OrderedDict
 import pandas, os.path
-import matplotlib.pyplot as plt
 
 from Committee import Committee
 
@@ -34,7 +33,8 @@ OPTIMALITY_COLUMNS = [
                  "non_tyrannic_minority_decisiveness_optimal",
                  "majority_tyranny_optimal", "minority_tyranny_optimal", "expert_tyranny_optimal", "minority_colluding"]
 
-CORRECTNESS_COLUMNS = ["optimal_correct", "majority_correct", "expert_correct", "compromise_minority_correct", "compromose_strongmajority_correct"]
+CORRECTNESS_COLUMNS = ["optimal_correct", "majority_correct", "expert_correct", "compromise_minority_correct", "compromose_strongmajority_correct",
+                       "optimal_correct_minus_majority_correct"]
 
 AGREEMENT_COLUMNS = ["optimal_agrees_majority", "compromise_minority_agrees_majority", "compromise_minority_agrees_optimal", "compromose_strongmajority_agrees_majority", "compromose_strongmajority_agrees_optimal"]
 
@@ -136,6 +136,7 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
 
                     ("optimal_correct", optimal_correct_sum / num_of_iterations),
                     ("majority_correct", majority_correct_sum / num_of_iterations),
+                    ("optimal_correct_minus_majority_correct", (optimal_correct_sum-majority_correct_sum) / num_of_iterations),
                     ("expert_correct", expert_correct_sum / num_of_iterations),
                     ("compromise_minority_correct", compromise_minority_correct_sum / num_of_iterations),
                     ("compromose_strongmajority_correct", compromose_strongmajority_correct_sum / num_of_iterations),
@@ -149,12 +150,25 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
     results_table.done()
 
 
-def convert_probabilities_to_odds(results_csv_file:str):
-    results = pandas.read_csv(results_csv_file)
-    for column in REPORTED_COLUMNS:
-        if column in results.columns:
-            results[column] = results[column] / (1-results[column])
-    results.to_csv(results_csv_file.replace(".csv", "-odds.csv"), index=True)
+# def convert_probabilities_to_odds(results_csv_file:str):
+#     results = pandas.read_csv(results_csv_file)
+#     for column in REPORTED_COLUMNS:
+#         if column in results.columns:
+#             results[column] = results[column] / (1-results[column])
+#     results.to_csv(results_csv_file.replace(".csv", "-odds.csv"), index=True)
+#
+#
+# def add_difference_column(results_csv_file:str):
+#     results = pandas.read_csv(results_csv_file)
+#     results["optimal_correct_minus_majority_correct"] = results["optimal_correct"] - results["majority_correct"]
+#     results.to_csv(results_csv_file.replace(".csv", "-diff.csv"), index=True)
+
+
+def add_discrete_derivative_column(results_csv_file:str):
+    results = pandas.read_csv(results_csv_file)\
+        .sort_values(by=['mean', 'std', 'voters'])
+    results['d_majority_correct_d_voters'] = results.groupby(['mean', 'std'])['majority_correct'].diff().fillna(0)
+    results.to_csv(results_csv_file.replace(".csv", "-diff.csv"), index=True)
 
 
 def create_group_results(results_csv_file:str):
