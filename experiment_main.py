@@ -128,7 +128,7 @@ num_of_iterations = 1000
 num_of_voterss = [3, 5, 7,
                   9, 11, 21,
                   31, 41, 51]
-results_file="results/{}iters-diff.csv".format(num_of_iterations)
+results_file="results/{}iters.csv".format(num_of_iterations)
 
 expertise_means = [.5, .55, .6,
                    .7, .75, .8,
@@ -140,9 +140,10 @@ expertise_stds = [0.02, 0.03, 0.04,
 
 
 # create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
-# create_group_results(results_file)
 # add_discrete_derivative_column(results_file)
-
+add_difference_column(results_file)
+create_group_results(results_file)
+exit(0)
 
 plot_vs_mean_on_one_page(results_file, "results/correctness_vs_mean.png",
      ["majority_correct", "optimal_correct"],
