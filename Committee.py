@@ -26,6 +26,10 @@ class Committee:
     def random_expertise_levels(mean:float, std:float, size:int):
         return Committee(random_expertise_levels(mean, std, size))
 
+    @staticmethod
+    def fixed_expertise_levels(mean:float, size:int):
+        return Committee(np.array([mean]*size))
+
 
     ### CHECK WHETHER THE OPTIMAL RULE IS DECISIVE / TYRANIC - BASED ON THE WEIGHTS
 
@@ -376,6 +380,9 @@ if __name__ == "__main__":
     import doctest
     (failures,tests) = doctest.testmod(report=True)
     print ("{} failures, {} tests".format(failures,tests))
+    # print(random_expertise_levels(mean=0.6, std=0.1, size=11))
+    # print(random_expertise_levels(mean=0.6, std=0, size=11))   # Division by zero error
+
 
 
 

@@ -38,7 +38,8 @@ OLD_CORRECTNESS_COLUMNS = ["expert_correct", "compromise_minority_correct", "com
 CORRECTNESS_COLUMNS = ["optimal_correct", "majority_correct",
                        "optimal_correct_minus_mean", "majority_correct_minus_mean",
                        "d_optimal_correct_d_voters", "d_majority_correct_d_voters",
-                       "ratio_difference_to_mean", "ratio_derivative_by_n", "ratio_correct"]
+                       "ratio_difference_to_mean", "ratio_derivative_by_n", "ratio_correct",
+                       "majority_correct_with_equal_expertise"]
 
 
 AGREEMENT_COLUMNS = ["optimal_agrees_majority", "compromise_minority_agrees_majority", "compromise_minority_agrees_optimal", "compromose_strongmajority_agrees_majority", "compromose_strongmajority_agrees_optimal"]
@@ -157,6 +158,33 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
     results_table.done()
 
 
+
+#
+# def create_results_2(results_csv_file:str, num_of_iterations:int, num_of_voterss:list, expertise_means:list, expertise_stds:list, num_of_decisions:int=1, debug_committees=False):
+#     results_table = TeeTable(TABLE_COLUMNS, results_csv_file)
+#
+#     for num_of_voters in num_of_voterss:
+#         for expertise_mean in expertise_means:
+#             for expertise_std in expertise_stds:
+#                 majority_correct_sum = 0
+#                 for _ in range(num_of_iterations):
+#                     committee = Committee.fixed_expertise_levels(expertise_mean, num_of_voters)
+#                     for _ in range(num_of_decisions):
+#                         vote = committee.vote()
+#                         majority_vote = committee.simple_majority_rule(vote)
+#                         majority_correct_sum += majority_vote/num_of_decisions
+#
+#                 results_table.add(OrderedDict((
+#                     ("iterations", num_of_iterations),
+#                     ("voters", num_of_voters),
+#                     ("mean", expertise_mean),
+#                     ("std", expertise_std),
+#                     ("majority_correct_with_equal_expertise", majority_correct_sum / num_of_iterations),
+#                 )))
+#     results_table.done()
+#
+
+
 # def convert_probabilities_to_odds(results_csv_file:str):
 #     results = pandas.read_csv(results_csv_file)
 #     for column in REPORTED_COLUMNS:
@@ -167,22 +195,23 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
 
 def add_difference_columns(results_csv_file:str):
     results = pandas.read_csv(results_csv_file)
-    results["majority_correct_minus_mean"] = results["majority_correct"] - results["mean"]
-    results["optimal_correct_minus_mean"] = results["optimal_correct"] - results["mean"]
-    results["optimal_correct_minus_majority_correct"] = results["optimal_correct"] - results["majority_correct"]
+    # results["majority_correct_minus_mean"] = results["majority_correct"] - results["mean"]
+    # results["optimal_correct_minus_mean"] = results["optimal_correct"] - results["mean"]
+    results["majorityequal_correct_minus_mean"] = results["majority_correct_with_equal_expertise"] - results["mean"]
     results.to_csv(results_csv_file, index=True)
 
 def add_discrete_derivative_columns(results_csv_file:str):
     results = pandas.read_csv(results_csv_file).sort_values(by=['mean', 'std', 'voters'])
-    results['d_majority_correct_d_voters'] = results.groupby(['mean', 'std'])['majority_correct'].diff().fillna(0)
-    results['d_optimal_correct_d_voters'] = results.groupby(['mean', 'std'])['optimal_correct'].diff().fillna(0)
+    # results['d_majority_correct_d_voters'] = results.groupby(['mean', 'std'])['majority_correct'].diff().fillna(0)
+    # results['d_optimal_correct_d_voters'] = results.groupby(['mean', 'std'])['optimal_correct'].diff().fillna(0)
+    results['d_majorityequal_correct_d_voters'] = results.groupby(['mean', 'std'])['majority_correct_with_equal_expertise'].diff().fillna(0)
     results.to_csv(results_csv_file, index=True)
 
 def add_ratio_columns(results_csv_file:str):
     results = pandas.read_csv(results_csv_file).sort_values(by=['mean', 'std', 'voters'])
-    results['ratio_difference_to_mean'] = results["optimal_correct_minus_mean"] / results["majority_correct_minus_mean"]
-    results['ratio_derivative_by_n']    = results["d_optimal_correct_d_voters"] / results["d_majority_correct_d_voters"]
-    results['ratio_correct']            = results["optimal_correct"] / results["majority_correct"]
+    results['ratio_difference_to_mean'] = results["majority_correct_minus_mean"] / results["majorityequal_correct_minus_mean"]
+    results['ratio_derivative_by_n']    = results["d_majority_correct_d_voters"] / results["d_majorityequal_correct_d_voters"]
+    results['ratio_correct']            = results["majority_correct"] / results["optimal_correct"]
     results.to_csv(results_csv_file, index=True)
 
 def create_group_results(results_csv_file:str):
