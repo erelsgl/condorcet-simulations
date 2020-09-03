@@ -33,8 +33,13 @@ OPTIMALITY_COLUMNS = [
                  "non_tyrannic_minority_decisiveness_optimal",
                  "majority_tyranny_optimal", "minority_tyranny_optimal", "expert_tyranny_optimal", "minority_colluding"]
 
-CORRECTNESS_COLUMNS = ["optimal_correct", "majority_correct", "expert_correct", "compromise_minority_correct", "compromose_strongmajority_correct",
-                       "majority_correct_minus_mean", "optimal_correct_minus_majority_correct", "d_majority_correct_d_voters"]
+OLD_CORRECTNESS_COLUMNS = ["expert_correct", "compromise_minority_correct", "compromose_strongmajority_correct", "optimal_correct_minus_majority_correct"]
+
+CORRECTNESS_COLUMNS = ["optimal_correct", "majority_correct",
+                       "optimal_correct_minus_mean", "majority_correct_minus_mean",
+                       "d_optimal_correct_d_voters", "d_majority_correct_d_voters",
+                       "ratio_difference_to_mean", "ratio_derivative_by_n", "ratio_correct"]
+
 
 AGREEMENT_COLUMNS = ["optimal_agrees_majority", "compromise_minority_agrees_majority", "compromise_minority_agrees_optimal", "compromose_strongmajority_agrees_majority", "compromose_strongmajority_agrees_optimal"]
 
@@ -135,6 +140,7 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
                     ("minority_colluding", minority_colluding_sum/num_of_iterations),
 
                     ("optimal_correct", optimal_correct_sum / num_of_iterations),
+                    ("optimal_correct_minus_mean", optimal_correct_sum / num_of_iterations - expertise_mean),
                     ("majority_correct", majority_correct_sum / num_of_iterations),
                     ("majority_correct_minus_mean", majority_correct_sum / num_of_iterations - expertise_mean),
                     ("optimal_correct_minus_majority_correct", (optimal_correct_sum-majority_correct_sum) / num_of_iterations),
@@ -157,24 +163,27 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
 #         if column in results.columns:
 #             results[column] = results[column] / (1-results[column])
 #     results.to_csv(results_csv_file.replace(".csv", "-odds.csv"), index=True)
-#
-#
-# def add_difference_column(results_csv_file:str):
-#     results = pandas.read_csv(results_csv_file)
-#     results["optimal_correct_minus_majority_correct"] = results["optimal_correct"] - results["majority_correct"]
-#     results.to_csv(results_csv_file.replace(".csv", "-diff.csv"), index=True)
 
-def add_difference_column(results_csv_file:str):
+
+def add_difference_columns(results_csv_file:str):
     results = pandas.read_csv(results_csv_file)
     results["majority_correct_minus_mean"] = results["majority_correct"] - results["mean"]
+    results["optimal_correct_minus_mean"] = results["optimal_correct"] - results["mean"]
+    results["optimal_correct_minus_majority_correct"] = results["optimal_correct"] - results["majority_correct"]
     results.to_csv(results_csv_file, index=True)
 
-def add_discrete_derivative_column(results_csv_file:str):
-    results = pandas.read_csv(results_csv_file)\
-        .sort_values(by=['mean', 'std', 'voters'])
+def add_discrete_derivative_columns(results_csv_file:str):
+    results = pandas.read_csv(results_csv_file).sort_values(by=['mean', 'std', 'voters'])
     results['d_majority_correct_d_voters'] = results.groupby(['mean', 'std'])['majority_correct'].diff().fillna(0)
-    results.to_csv(results_csv_file.replace(".csv", "-diff.csv"), index=True)
+    results['d_optimal_correct_d_voters'] = results.groupby(['mean', 'std'])['optimal_correct'].diff().fillna(0)
+    results.to_csv(results_csv_file, index=True)
 
+def add_ratio_columns(results_csv_file:str):
+    results = pandas.read_csv(results_csv_file).sort_values(by=['mean', 'std', 'voters'])
+    results['ratio_difference_to_mean'] = results["optimal_correct_minus_mean"] / results["majority_correct_minus_mean"]
+    results['ratio_derivative_by_n']    = results["d_optimal_correct_d_voters"] / results["d_majority_correct_d_voters"]
+    results['ratio_correct']            = results["optimal_correct"] / results["majority_correct"]
+    results.to_csv(results_csv_file, index=True)
 
 def create_group_results(results_csv_file:str):
     results = pandas.read_csv(results_csv_file)
@@ -195,6 +204,7 @@ def create_group_results(results_csv_file:str):
 
     # results_mean\
     #     .drop(columns=CORRECTNESS_COLUMNS)\
+    #     .drop(columns=OLD_CORRECTNESS_COLUMNS)\
     #     .drop(columns=AGREEMENT_COLUMNS)\
     #     .rename(columns={
     #         "simple_majority_optimal": "smr",
@@ -207,9 +217,11 @@ def create_group_results(results_csv_file:str):
     #     .to_csv(results_csv_file.replace(".csv", "-mean-optimal.csv"), index=True)
     results_mean\
         .drop(columns=OPTIMALITY_COLUMNS)\
-        .drop(columns=AGREEMENT_COLUMNS)\
-        .to_csv(results_csv_file.replace(".csv", "-mean-correct.csv"), index=True)
+        .drop(columns=AGREEMENT_COLUMNS) \
+        .drop(columns=OLD_CORRECTNESS_COLUMNS)\
+    .to_csv(results_csv_file.replace(".csv", "-mean-correct.csv"), index=True)
     # results_mean\
     #     .drop(columns=OPTIMALITY_COLUMNS)\
     #     .drop(columns=CORRECTNESS_COLUMNS)\
+    #     .drop(columns=OLD_CORRECTNESS_COLUMNS)\
     #     .to_csv(results_csv_file.replace(".csv", "-mean-agreement.csv"), index=True)

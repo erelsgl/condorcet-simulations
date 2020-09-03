@@ -140,8 +140,9 @@ expertise_stds = [0.02, 0.03, 0.04,
 
 
 # create_results(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
-# add_discrete_derivative_column(results_file)
-add_difference_column(results_file)
+add_difference_columns(results_file)
+add_discrete_derivative_columns(results_file)
+add_ratio_columns(results_file)
 create_group_results(results_file)
 exit(0)
 
