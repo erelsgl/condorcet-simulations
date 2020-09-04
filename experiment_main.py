@@ -142,9 +142,9 @@ expertise_stds = [0.02, 0.03, 0.04,
 # create_results_2("results/{}iters-2.csv", num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
 # exit(0)
 
-add_difference_columns(results_file)
-add_discrete_derivative_columns(results_file)
-create_group_results(results_file)
+# add_difference_columns(results_file)
+# add_discrete_derivative_columns(results_file)
+# create_group_results(results_file)
 add_ratio_columns(results_file.replace(".csv", "-mean-correct.csv"))
 exit(0)
 
