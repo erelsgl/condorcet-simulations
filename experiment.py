@@ -19,6 +19,7 @@ from collections import OrderedDict
 import pandas, os.path
 
 from Committee import Committee
+from expertise_levels import truncnorm_expertise_levels, beta_expertise_levels
 
 import logging, sys
 logger = logging.getLogger(__name__)
@@ -26,27 +27,6 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 logger.setLevel(logging.INFO)
 
-INDEX_COLUMNS = ["iterations","voters", "mean", "mean_bucket", "std", "std_bucket"]
-
-OPTIMALITY_COLUMNS = [
-                 "simple_majority_optimal", "minority_decisiveness_optimal",
-                 "non_tyrannic_minority_decisiveness_optimal",
-                 "majority_tyranny_optimal", "minority_tyranny_optimal", "expert_tyranny_optimal", "minority_colluding"]
-
-OLD_CORRECTNESS_COLUMNS = ["expert_correct", "compromise_minority_correct", "compromose_strongmajority_correct", "optimal_correct_minus_majority_correct"]
-
-CORRECTNESS_COLUMNS = ["optimal_correct", "majority_correct",
-                       "optimal_correct_minus_mean", "majority_correct_minus_mean",
-                       "d_optimal_correct_d_voters", "d_majority_correct_d_voters",
-                       "ratio_difference_to_mean", "ratio_derivative_by_n", "ratio_correct",
-                       "majority_correct_with_equal_expertise"]
-
-
-AGREEMENT_COLUMNS = ["optimal_agrees_majority", "compromise_minority_agrees_majority", "compromise_minority_agrees_optimal", "compromose_strongmajority_agrees_majority", "compromose_strongmajority_agrees_optimal"]
-
-REPORTED_COLUMNS = OPTIMALITY_COLUMNS + CORRECTNESS_COLUMNS + AGREEMENT_COLUMNS
-
-TABLE_COLUMNS = INDEX_COLUMNS + REPORTED_COLUMNS
 
 
 def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:list, expertise_means:list, expertise_stds:list, num_of_decisions:int=1, debug_committees=False):
@@ -67,6 +47,28 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
     NOTE: num_decisions is set to 1 based on the answer by Henry:
             https://stats.stackexchange.com/a/471431/10760
     """
+    INDEX_COLUMNS = ["iterations","voters", "mean", "mean_bucket", "std", "std_bucket"]
+
+    OPTIMALITY_COLUMNS = [
+                    "simple_majority_optimal", "minority_decisiveness_optimal",
+                    "non_tyrannic_minority_decisiveness_optimal",
+                    "majority_tyranny_optimal", "minority_tyranny_optimal", "expert_tyranny_optimal", "minority_colluding"]
+
+    OLD_CORRECTNESS_COLUMNS = ["expert_correct", "compromise_minority_correct", "compromose_strongmajority_correct", "optimal_correct_minus_majority_correct"]
+
+    CORRECTNESS_COLUMNS = ["optimal_correct", "majority_correct",
+                        "optimal_correct_minus_mean", "majority_correct_minus_mean",
+                        "d_optimal_correct_d_voters", "d_majority_correct_d_voters",
+                        "ratio_difference_to_mean", "ratio_derivative_by_n", "ratio_correct",
+                        "majority_correct_with_equal_expertise"]
+
+
+    AGREEMENT_COLUMNS = ["optimal_agrees_majority", "compromise_minority_agrees_majority", "compromise_minority_agrees_optimal", "compromose_strongmajority_agrees_majority", "compromose_strongmajority_agrees_optimal"]
+
+    REPORTED_COLUMNS = OPTIMALITY_COLUMNS + CORRECTNESS_COLUMNS + AGREEMENT_COLUMNS
+
+    TABLE_COLUMNS = INDEX_COLUMNS + REPORTED_COLUMNS
+
     results_table = TeeTable(TABLE_COLUMNS, results_csv_file)
 
     for num_of_voters in num_of_voterss:
@@ -91,14 +93,14 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
                 compromose_strongmajority_agrees_optimal_sum = 0
 
                 for _ in range(num_of_iterations):
-                    committee = Committee.random_expertise_levels(expertise_mean, expertise_std, num_of_voters)
+                    committee = Committee(truncnorm_expertise_levels(expertise_mean, expertise_std, num_of_voters))
                     if (debug_committees): print(committee)
-                    minority_decisiveness_optimal += committee.is_minority_decisiveness_optimal()
+                    minority_decisiveness_optimal += committee.is_optimal_minority_decisiveness()
                     if (num_of_voters<=21):
-                        majority_tyranny_optimal += committee.is_majority_tyranny_optimal()
+                        majority_tyranny_optimal += committee.is_optimal_majority_tyranny()
                     if (num_of_voters<=51):
-                        minority_tyranny_optimal += committee.is_minority_tyranny_optimal()
-                    expert_tyranny_optimal_sum += committee.is_minority_decisiveness_optimal(minority_size=1)
+                        minority_tyranny_optimal += committee.is_optimal_strong_epistocracy()
+                    expert_tyranny_optimal_sum += committee.is_optimal_minority_decisiveness(minority_size=1)
                     minority_colluding_sum += committee.fraction_minority_colluding(num_of_decisions=1)
 
                     for _ in range(num_of_decisions):
@@ -159,38 +161,6 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
 
 
 
-#
-# def create_results_2(results_csv_file:str, num_of_iterations:int, num_of_voterss:list, expertise_means:list, expertise_stds:list, num_of_decisions:int=1, debug_committees=False):
-#     results_table = TeeTable(TABLE_COLUMNS, results_csv_file)
-#
-#     for num_of_voters in num_of_voterss:
-#         for expertise_mean in expertise_means:
-#             for expertise_std in expertise_stds:
-#                 majority_correct_sum = 0
-#                 for _ in range(num_of_iterations):
-#                     committee = Committee.fixed_expertise_levels(expertise_mean, num_of_voters)
-#                     for _ in range(num_of_decisions):
-#                         vote = committee.vote()
-#                         majority_vote = committee.simple_majority_rule(vote)
-#                         majority_correct_sum += majority_vote/num_of_decisions
-#
-#                 results_table.add(OrderedDict((
-#                     ("iterations", num_of_iterations),
-#                     ("voters", num_of_voters),
-#                     ("mean", expertise_mean),
-#                     ("std", expertise_std),
-#                     ("majority_correct_with_equal_expertise", majority_correct_sum / num_of_iterations),
-#                 )))
-#     results_table.done()
-#
-
-
-# def convert_probabilities_to_odds(results_csv_file:str):
-#     results = pandas.read_csv(results_csv_file)
-#     for column in REPORTED_COLUMNS:
-#         if column in results.columns:
-#             results[column] = results[column] / (1-results[column])
-#     results.to_csv(results_csv_file.replace(".csv", "-odds.csv"), index=True)
 
 
 def add_difference_columns(results_csv_file:str):
@@ -214,18 +184,18 @@ def add_ratio_columns(results_csv_file:str):
     results['ratio_correct']            = results["majority_correct"] / results["optimal_correct"]
     results.to_csv(results_csv_file, index=True)
 
-def create_group_results(results_csv_file:str):
+def create_group_results(results_csv_file:str, mean_1:float, mean_2:float, std_1:float, std_2:float):
     results = pandas.read_csv(results_csv_file)
 
     # Create buckets for the mean:
     results["mean_bucket"] = "Lower"
-    results.loc[results.query('mean > 0.65').index, "mean_bucket"] = "Medium"
-    results.loc[results.query('mean > 0.85').index, "mean_bucket"] = "Upper"
+    results.loc[results.query(f'mean > {mean_1}').index, "mean_bucket"] = "Medium"
+    results.loc[results.query(f'mean > {mean_2}').index, "mean_bucket"] = "Upper"
 
     # Create buckets for the std:
     results["std_bucket"] = "Lower"
-    results.loc[results.query('std > 0.05').index, "std_bucket"] = "Medium"
-    results.loc[results.query('std > 0.09').index, "std_bucket"] = "Upper"
+    results.loc[results.query(f'std > {std_1}').index, "std_bucket"] = "Medium"
+    results.loc[results.query(f'std > {std_2}').index, "std_bucket"] = "Upper"
 
     results_mean = results.groupby(['voters', 'mean_bucket', 'std_bucket']).mean().round(3)
     results_mean.drop(columns=["iterations","mean","std"], inplace=True)
@@ -244,13 +214,26 @@ def create_group_results(results_csv_file:str):
     #         "expert_tyranny_optimal": "expert",
     #         "minority_colluding": "min-coll"})\
     #     .to_csv(results_csv_file.replace(".csv", "-mean-optimal.csv"), index=True)
-    results_mean\
-        .drop(columns=OPTIMALITY_COLUMNS)\
-        .drop(columns=AGREEMENT_COLUMNS) \
-        .drop(columns=OLD_CORRECTNESS_COLUMNS)\
-    .to_csv(results_csv_file.replace(".csv", "-mean-correct.csv"), index=True)
+    # results_mean\
+    #     .drop(columns=OPTIMALITY_COLUMNS)\
+    #     .drop(columns=AGREEMENT_COLUMNS) \
+    #     .drop(columns=OLD_CORRECTNESS_COLUMNS)\
+    # .to_csv(results_csv_file.replace(".csv", "-mean-correct.csv"), index=True)
     # results_mean\
     #     .drop(columns=OPTIMALITY_COLUMNS)\
     #     .drop(columns=CORRECTNESS_COLUMNS)\
     #     .drop(columns=OLD_CORRECTNESS_COLUMNS)\
     #     .to_csv(results_csv_file.replace(".csv", "-mean-agreement.csv"), index=True)
+
+
+
+if __name__=="__main__":
+    # Make a small experiment, for debug
+    num_of_iterations = 10
+    num_of_voterss = [3,5,7,9,11]
+    expertise_means = [0.55]
+    expertise_stds = [0.03]
+    results_file="results/debug.csv"
+    create_results_revision(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
+
+

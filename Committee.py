@@ -1,3 +1,5 @@
+#!python3
+
 """
 A Committee is a group of experts with various expertise levels.
 Their goal is to arrive at the "correct" decision.
@@ -13,6 +15,7 @@ class Committee:
     def __init__(self, sorted_expertise_levels:list):
         self.sorted_expertise_levels = sorted_expertise_levels
         self.weights = logodds(sorted_expertise_levels)
+        # print(self.weights)
         self.half_total_weight = sum(self.weights)/2
         self.committee_size = len(sorted_expertise_levels)
         self.minority_size = int(np.floor((self.committee_size - 1) / 2))
@@ -22,62 +25,90 @@ class Committee:
         return "probabilities: {}\n      weights: {}".format(
             round3(self.sorted_expertise_levels), round3(self.weights))
 
-    @staticmethod
-    def random_expertise_levels(mean:float, std:float, size:int):
-        return Committee(random_expertise_levels(mean, std, size))
-
-    @staticmethod
-    def fixed_expertise_levels(mean:float, size:int):
-        return Committee(np.array([mean]*size))
-
 
     ### CHECK WHETHER THE OPTIMAL RULE IS DECISIVE / TYRANIC - BASED ON THE WEIGHTS
 
-    def is_minority_decisiveness_optimal(self, minority_size:int=None)->bool:
+    def is_optimal_strong_democracy(self)->bool:
         """
-        :param sorted_expertise_levels: a list of expertise-levels (numbers in [0.5,1]), sorted from high to low.
-        :return: whether the minority of experts is decisive in the optimal decision rule.
-        "decisive" means that, if ALL members of minority agree, then their opinion is accepted.
-        >>> Committee(np.array([0.8])).is_minority_decisiveness_optimal()
-        False
-        >>> Committee(np.array([0.8, 0.8, 0.8])).is_minority_decisiveness_optimal()
-        False
-        >>> Committee(np.array([0.9, 0.6, 0.6])).is_minority_decisiveness_optimal()
+        :return: whether the optimal decision rule is "strongly democratic", that is, equivalent to simple-majority.
+        >>> Committee(np.array([0.8])).is_optimal_strong_democracy()
         True
-        >>> Committee(np.array([0.8, 0.8, 0.8, 0.8, 0.8])).is_minority_decisiveness_optimal()
+        >>> Committee(np.array([0.8, 0.8, 0.8])).is_optimal_strong_democracy()
+        True
+        >>> Committee(np.array([0.9, 0.6, 0.6])).is_optimal_strong_democracy()
         False
-        >>> Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).is_minority_decisiveness_optimal()
+        >>> Committee(np.array([0.8, 0.8, 0.8, 0.8, 0.8])).is_optimal_strong_democracy()
         True
-        >>> Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).is_minority_decisiveness_optimal(minority_size=1)
+        >>> Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).is_optimal_strong_democracy()
         False
-        >>> Committee(np.array([0.99, 0.9, 0.6, 0.6, 0.6])).is_minority_decisiveness_optimal(minority_size=1)
-        True
-        >>> Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).is_minority_decisiveness_optimal(minority_size=3)
-        True
+        >>> Committee(np.array([0.99, 0.9, 0.6, 0.6, 0.6])).is_optimal_strong_democracy()
+        False
+        >>> Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).is_optimal_strong_democracy()
+        False
         """
-        if minority_size is None:
-            minority_size = self.minority_size
-        minority_weight = sum(self.weights[0:minority_size])
-        return minority_weight > self.half_total_weight
+        return not self.is_optimal_minority_decisiveness(self.minority_size)
 
 
-    def is_minority_tyranny_optimal(self)->bool:
+    def is_optimal_weak_democracy(self)->bool:
         """
-        :param sorted_expertise_levels: a list of expertise-levels (numbers in [0.5,1]), sorted from high to low.
-        :return: whether the minority of experts is tyrannic in the optimal decision rule.
+        :return: whether the optimal decision rule is "weakly democratic", that is, gives positive weights to all voters.
+        NOTE: strong democracy implies weak democracy, but not vice-versa.
+        >>> Committee(np.array([0.8, 0.8, 0.8])).is_optimal_weak_democracy()
+        True
+        >>> Committee(np.array([0.9, 0.6, 0.6])).is_optimal_weak_democracy()
+        False
+        >>> Committee(np.array([0.8, 0.8, 0.8, 0.8, 0.8])).is_optimal_weak_democracy()
+        True
+        >>> Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).is_optimal_weak_democracy()
+        True
+        >>> Committee(np.array([0.99, 0.99, 0.6, 0.6, 0.6])).is_optimal_weak_democracy()
+        True
+        >>> Committee(np.array([0.99, 0.9, 0.6, 0.6, 0.6])).is_optimal_weak_democracy()
+        False
+        """
+        return not self.is_optimal_majority_tyranny()
+
+
+    def is_optimal_weak_epistocracy(self)->bool:
+        """
+        :return: whether the optimal decision rule is "weakly epistocratic", that is, 
+                 some voters have zero weight.
+
+        NOTE: strong epistocracy (=tyrannic) implies weak epistocracy (=decisiveness), but not vice-versa.
+
+        >>> Committee(np.array([0.8, 0.8, 0.8])).is_optimal_weak_epistocracy()
+        False
+        >>> Committee(np.array([0.9, 0.6, 0.6])).is_optimal_weak_epistocracy()
+        True
+        >>> Committee(np.array([0.8, 0.8, 0.8, 0.8, 0.8])).is_optimal_weak_epistocracy()
+        False
+        >>> Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).is_optimal_weak_epistocracy()
+        False
+        >>> Committee(np.array([0.99, 0.99, 0.6, 0.6, 0.6])).is_optimal_weak_epistocracy()
+        False
+        >>> Committee(np.array([0.99, 0.9, 0.6, 0.6, 0.6])).is_optimal_weak_epistocracy()
+        True
+        """
+        return self.is_optimal_majority_tyranny()
+
+
+    def is_optimal_strong_epistocracy(self)->bool:
+        """
+        :return: whether the optimal decision rule is "strongly epistocratic", that is, 
+                 the minority of experts is tyrannic.
         "tyrannic" means that the decision is accepted only by a vote within the minority, ignoring the majority altogether.
         NOTE: "tyrannic" implies "decisive", but not vice-versa.
-        >>> Committee(np.array([0.8, 0.8, 0.8])).is_minority_tyranny_optimal()
+        >>> Committee(np.array([0.8, 0.8, 0.8])).is_optimal_strong_epistocracy()
         False
-        >>> Committee(np.array([0.9, 0.6, 0.6])).is_minority_tyranny_optimal()
+        >>> Committee(np.array([0.9, 0.6, 0.6])).is_optimal_strong_epistocracy()
         True
-        >>> Committee(np.array([0.8, 0.8, 0.8, 0.8, 0.8])).is_minority_tyranny_optimal()
+        >>> Committee(np.array([0.8, 0.8, 0.8, 0.8, 0.8])).is_optimal_strong_epistocracy()
         False
-        >>> Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).is_minority_tyranny_optimal()
+        >>> Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).is_optimal_strong_epistocracy()
         False
-        >>> Committee(np.array([0.99, 0.99, 0.6, 0.6, 0.6])).is_minority_tyranny_optimal()
+        >>> Committee(np.array([0.99, 0.99, 0.6, 0.6, 0.6])).is_optimal_strong_epistocracy()
         False
-        >>> Committee(np.array([0.99, 0.9, 0.6, 0.6, 0.6])).is_minority_tyranny_optimal()
+        >>> Committee(np.array([0.99, 0.9, 0.6, 0.6, 0.6])).is_optimal_strong_epistocracy()
         True
         """
         minority_weights = self.weights[0:self.minority_size]
@@ -90,26 +121,63 @@ class Committee:
             if sum_majority_weights > weight_difference_in_minority:
                 # print("sum_majority_weights={} minority_subset={} sum_minority_subset={} sum_complement_subset={}".
                 #       format(np.round(sum_majority_weights,3),np.round(minority_subset,3),np.round(sum_minority_subset,3),np.round(sum_complement_subset,3)))
-                return False # the majority is essential in at least one case
-        return True # the majority is never essential
+                return False    # the majority is effective in at least one case
+        return True             # the majority is never essential
 
 
-    def is_majority_tyranny_optimal(self)->bool:
+
+    def is_optimal_minority_decisiveness(self, minority_size:int=None)->bool:
+        """
+        :return: whether, in the optimal decision rule, the minority of experts is decisive.
+        "decisive" means that, if ALL members of minority agree, then their opinion is accepted.
+
+        :note the optimal rule is minority-decisive, iff it is NOT the simple majority rule.
+        Hence, this function is the opposite of is_optimal_strong_democracy.
+
+        >>> Committee(np.array([0.8])).is_optimal_minority_decisiveness()
+        False
+        >>> Committee(np.array([0.8, 0.8, 0.8])).is_optimal_minority_decisiveness()
+        False
+        >>> Committee(np.array([0.9, 0.6, 0.6])).is_optimal_minority_decisiveness()
+        True
+        >>> Committee(np.array([0.8, 0.8, 0.8, 0.8, 0.8])).is_optimal_minority_decisiveness()
+        False
+        >>> Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).is_optimal_minority_decisiveness()
+        True
+        >>> Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).is_optimal_minority_decisiveness(minority_size=1)
+        False
+        >>> Committee(np.array([0.99, 0.9, 0.6, 0.6, 0.6])).is_optimal_minority_decisiveness(minority_size=1)
+        True
+        >>> Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).is_optimal_minority_decisiveness(minority_size=3)
+        True
+        """
+        if minority_size is None:
+            minority_size = self.minority_size
+        minority_weight = sum(self.weights[0:minority_size])
+        return minority_weight > self.half_total_weight
+
+
+
+    def is_optimal_majority_tyranny(self)->bool:
         """
         :param sorted_expertise_levels: a list of expertise-levels (numbers in [0.5,1]), sorted from high to low.
         :return: whether the optimal decision rule allows majority tyranny,
         meaning that some voters have zero weight and do not affect the decision.
-        >>> Committee(np.array([0.8, 0.8, 0.8])).is_majority_tyranny_optimal()
+
+        NOTE: the optimal rule is majority-tyrannic, iff it is NOT a weak-democracy.
+        Hence, this function is the opposite of is_optimal_weak_democracy.
+
+        >>> Committee(np.array([0.8, 0.8, 0.8])).is_optimal_majority_tyranny()
         False
-        >>> Committee(np.array([0.9, 0.6, 0.6])).is_majority_tyranny_optimal()
+        >>> Committee(np.array([0.9, 0.6, 0.6])).is_optimal_majority_tyranny()
         True
-        >>> Committee(np.array([0.8, 0.8, 0.8, 0.8, 0.8])).is_majority_tyranny_optimal()
+        >>> Committee(np.array([0.8, 0.8, 0.8, 0.8, 0.8])).is_optimal_majority_tyranny()
         False
-        >>> Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).is_majority_tyranny_optimal()
+        >>> Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).is_optimal_majority_tyranny()
         False
-        >>> Committee(np.array([0.99, 0.99, 0.6, 0.6, 0.6])).is_majority_tyranny_optimal()
+        >>> Committee(np.array([0.99, 0.99, 0.6, 0.6, 0.6])).is_optimal_majority_tyranny()
         False
-        >>> Committee(np.array([0.99, 0.9, 0.6, 0.6, 0.6])).is_majority_tyranny_optimal()
+        >>> Committee(np.array([0.99, 0.9, 0.6, 0.6, 0.6])).is_optimal_majority_tyranny()
         True
         """
         majority_weights = self.weights[0:self.committee_size-1]
@@ -354,24 +422,6 @@ def round3(l:list):
     return [np.round(x,3) for x in l]
 
 
-from scipy.stats import truncnorm
-def random_expertise_levels(mean:float, std:float, size:int):
-    """
-    Draw "size" random expertise levels.
-    Each level is a probability in [0.5,1],
-    drawn from a truncated-normal distribution with the given `mean` and `std`.
-    :return: an array of `size` random expretise levels, sorted from high to low.
-    """
-    scale = std
-    loc = mean
-    lower = 0.5
-    upper = 1
-    # a*scale + loc = lower
-    # b*scale + loc = upper
-    a = (lower - loc) / scale
-    b = (upper - loc) / scale
-    return -np.sort(-truncnorm.rvs(a, b, loc=loc, scale=scale, size=size))
-
 
 
 
@@ -380,9 +430,4 @@ if __name__ == "__main__":
     import doctest
     (failures,tests) = doctest.testmod(report=True)
     print ("{} failures, {} tests".format(failures,tests))
-    # print(random_expertise_levels(mean=0.6, std=0.1, size=11))
-    # print(random_expertise_levels(mean=0.6, std=0, size=11))   # Division by zero error
-
-
-
 

@@ -1,7 +1,7 @@
 #!python3
 
 """
-A main program for running a decision-rule experiment.
+A main program for a simulation experiment for the "one person, one weight" paper.
 See experiment.py for details.
 
 Since:  2020-06
@@ -26,6 +26,35 @@ edgecolor='k'
 
 rows = 3
 cols = 4
+
+
+def create_group_results(results_csv_file:str, mean_1:float, mean_2:float, std_1:float, std_2:float):
+    results = pandas.read_csv(results_csv_file)
+
+    # Create buckets for the mean:
+    results["mean_bucket"] = "Lower"
+    results.loc[results.query(f'mean > {mean_1}').index, "mean_bucket"] = "Medium"
+    results.loc[results.query(f'mean > {mean_2}').index, "mean_bucket"] = "Upper"
+
+    # Create buckets for the std:
+    results["std_bucket"] = "Lower"
+    results.loc[results.query(f'std > {std_1}').index, "std_bucket"] = "Medium"
+    results.loc[results.query(f'std > {std_2}').index, "std_bucket"] = "Upper"
+
+    results_mean = results.groupby(['voters', 'mean_bucket', 'std_bucket']).mean().round(3)
+    results_mean.drop(columns=["iterations","mean","std"], inplace=True)
+    results_mean.index.names = ["voters", "mean", "std"]
+
+    results_mean\
+        .rename(columns={
+            "optimal_is_strong_democracy": "st-demo",
+            "optimal_is_weak_democracy": "wk-demo",
+            "optimal_is_weak_epistocracy": "wk-epis",
+            "optimal_is_strong_epistocracy": "st-epis",
+            "optimal_is_expert_rule": "expert",
+            "minority_colluding": "min-coll",
+            "optimal_agrees_majority": "opt=maj"})\
+        .to_csv(results_csv_file.replace(".csv", "-mean-optimal.csv"), index=True)
 
 
 def plot_vs_mean_on_one_page(results_csv_file:str, figure_file:str, columns: list, column_names: list, num_of_voterss:list, expertise_means:list, expertise_stds:list, line_at_half:bool=False):
@@ -123,35 +152,36 @@ def plot_vs_voters_on_one_page(results_csv_file:str, figure_file:str, columns: l
 
 
 
-num_of_iterations = 1000
 
-num_of_voterss = [3, 5, 7,
-                  9, 11, 21,
-                  31, 41, 51]
-results_file="results/{}iters.csv".format(num_of_iterations)
+num_of_voterss = [
+    # 3, 5, 7,
+                #   9, 11, 21,
+                #   31, 41, 
+                  51]
 
-expertise_means = [.5, .55, .6,
-                   .7, .75, .8,
-                   .9, .95, 1]
+expertise_means = [.55, .6, 0.65,
+                   .7, .75,  .8,
+                   .85, .9,  0.95]
 
 expertise_stds = [0.02, 0.03, 0.04,
-                  0.06, 0.07, 0.08,
-                  0.10, 0.11, 0.12]
+                  0.07, 0.08, 0.09,
+                  0.12, 0.13, 0.14]
 
 
-# create_results_2("results/{}iters-2.csv", num_of_iterations, num_of_voterss, expertise_means, expertise_stds)
-# exit(0)
+results_file = f"results/1000iters-beta.csv"
 
 # add_difference_columns(results_file)
 # add_discrete_derivative_columns(results_file)
-# create_group_results(results_file)
-add_ratio_columns(results_file.replace(".csv", "-mean-correct.csv"))
+# add_ratio_columns(results_file.replace(".csv", "-mean-correct.csv"))
+create_group_results(results_file, mean_1=0.67, mean_2=0.82, std_1=0.05, std_2=0.1)
+
+# plot_vs_mean_on_one_page(results_file, "results/correctness_vs_mean.png",
+#      ["majority_correct", "optimal_correct"],
+#      ["SMR correct", "Optimal correct"],
+#      [3,5,7,9,11,21], expertise_means, expertise_stds, line_at_half=True)
+
 exit(0)
 
-plot_vs_mean_on_one_page(results_file, "results/correctness_vs_mean.png",
-     ["majority_correct", "optimal_correct"],
-     ["SMR correct", "Optimal correct"],
-     [3,5,7,9,11,21], expertise_means, expertise_stds, line_at_half=True)
 
 plot_vs_mean_on_one_page(results_file, "results/correctness_vs_mean_1.png",
      ["optimal_correct_minus_majority_correct"],
