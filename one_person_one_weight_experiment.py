@@ -56,6 +56,8 @@ def create_results_revision(results_csv_file:str, num_of_iterations:int, num_of_
                 minority_colluding_sum = 0
                 optimal_agrees_majority_sum = 0
 
+                if num_of_voters >= 21 and num_of_iterations > 100:
+                    num_of_iterations = 100
                 for _ in range(num_of_iterations):
                     committee = Committee(random_expertise_levels(expertise_mean, expertise_std, num_of_voters))
                     if (debug_committees): print(committee)
@@ -114,7 +116,14 @@ def create_results_revision(results_csv_file:str, num_of_iterations:int, num_of_
 
 num_of_iterations = 1000
 
-num_of_voterss = [3, 5, 7, 9, 11, 21,]
+# distribution="beta"
+# random_expertise_levels=beta_expertise_levels
+
+distribution="norm"
+random_expertise_levels=truncnorm_expertise_levels
+
+# num_of_voterss = [3, 5, 7, 9, 11, 21,]
+num_of_voterss = [21,]
 
 expertise_means = [.55, .6, 0.65,
                    .7, .75,  .8,
@@ -124,7 +133,8 @@ expertise_stds = [0.02, 0.03, 0.04,
                   0.07, 0.08, 0.09,
                   0.12, 0.13, 0.14]
 
-results_file = f"results/{num_of_iterations}iters-beta.csv"
+results_file = f"results/{num_of_iterations}iters-{distribution}.csv"
 create_results_revision(results_file, num_of_iterations, num_of_voterss, expertise_means, expertise_stds,
-    random_expertise_levels=beta_expertise_levels)
+    random_expertise_levels=random_expertise_levels
+    )
 

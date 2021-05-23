@@ -183,6 +183,11 @@ expertise_stds = [0.02, 0.03, 0.04,
 # create_group_results(results_file)
 # add_difference_column(results_file)
 
+# add_difference_columns(results_file)
+# add_discrete_derivative_columns(results_file)
+# add_ratio_columns(results_file.replace(".csv", "-mean-correct.csv"))
+
+
 
 plot_vs_mean_on_one_page(results_file, "results/optimality_vs_mean.png",
     ["simple_majority_optimal", "non_tyrannic_minority_decisiveness_optimal", "minority_tyranny_optimal"],

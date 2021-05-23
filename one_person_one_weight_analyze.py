@@ -57,23 +57,27 @@ def create_group_results(results_csv_file:str, mean_1:float, mean_2:float, std_1
         .to_csv(results_csv_file.replace(".csv", "-mean-optimal.csv"), index=True)
 
 
-def plot_vs_mean_on_one_page(results_csv_file:str, figure_file:str, columns: list, column_names: list, num_of_voterss:list, expertise_means:list, expertise_stds:list, line_at_half:bool=False):
+def plot_vs_mean_on_one_page(results_csv_file:str, figure_file:str, 
+    map_column_codes_to_column_names:dict,  num_of_voterss:list, expertise_means:list, expertise_stds:list, line_at_half:bool=False):
     A4 = (8,11) # A4 page: 8 inch length, 11 inch height
     plt.figure(figsize=A4, dpi=dpi, facecolor=facecolor, edgecolor=edgecolor)
 
     results = pandas.read_csv(results_csv_file)
 
     rows = len(num_of_voterss)
-    cols = len(columns)+1
-    top_left_axis = plt.subplot(rows, cols, 1)
+    cols = len(map_column_codes_to_column_names)+1
+    # top_left_axis = plt.subplot(rows, cols, 1)
     for row_index, num_of_voters in enumerate(num_of_voterss):
         results_for_voters = results.loc[results['voters']==num_of_voters]
-        for col_index, column in enumerate(columns):
+        for col_index, (column,column_name) in enumerate(map_column_codes_to_column_names.items()):
             subplot_index = row_index*cols+col_index+1
-            ax = plt.subplot(rows, cols, subplot_index, sharex=top_left_axis, sharey=top_left_axis)
+            # using sharex and sharey causes a strange bug: "AttributeError: 'NoneType' object has no attribute 'canvas'"
+            # ax = plt.subplot(rows, cols, subplot_index, sharex=top_left_axis, sharey=top_left_axis)
+            ax = plt.subplot(rows, cols, subplot_index)
+            ax.set_ylim((0,1))
 
             if row_index==0:
-                ax.set_title(column_names[col_index],
+                ax.set_title(column_name,
                              fontsize=11, weight='bold')
             ax.set_xlabel('', fontsize=axesFontSize)
 
@@ -99,31 +103,33 @@ def plot_vs_mean_on_one_page(results_csv_file:str, figure_file:str, columns: lis
                 plt.setp(ax.get_xticklabels(), visible=False)
 
     plt.xlabel("mean")
-    folder, _ = os.path.split(results_csv_file)
+    # plt.show()
     plt.savefig(figure_file)
-    plt.draw()
 
 
 
-def plot_vs_voters_on_one_page(results_csv_file:str, figure_file:str, columns: list, column_names: list, num_of_voterss:list, expertise_means:list, expertise_stds:list, line_at_half:bool=False):
+def plot_vs_voters_on_one_page(results_csv_file:str, figure_file:str, 
+    map_column_codes_to_column_names:dict, num_of_voterss:list, expertise_means:list, expertise_stds:list, line_at_half:bool=False):
     A4 = (8,11) # A4 page: 8 inch length, 11 inch height
     plt.figure(figsize=A4, dpi=dpi, facecolor=facecolor, edgecolor=edgecolor)
 
     results = pandas.read_csv(results_csv_file)
 
     rows = len(expertise_means)
-    cols = len(columns)+1
-    top_left_axis = plt.subplot(rows, cols, 1)
+    cols = len(map_column_codes_to_column_names)+1
+    # top_left_axis = plt.subplot(rows, cols, 1)
     for row_index, expertise_mean in enumerate(expertise_means):
         results_for_mean = results.loc[results['mean']==expertise_mean]
-        for col_index, column in enumerate(columns):
+        for col_index, (column,column_name) in enumerate(map_column_codes_to_column_names.items()):
             subplot_index = row_index*cols+col_index+1
-            ax = plt.subplot(rows, cols, subplot_index, sharex=top_left_axis, sharey=top_left_axis)
+            # ax = plt.subplot(rows, cols, subplot_index, sharex=top_left_axis, sharey=top_left_axis)
+            ax = plt.subplot(rows, cols, subplot_index)
 
             if row_index==0:
-                ax.set_title(column_names[col_index],
+                ax.set_title(column_name,
                              fontsize=11, weight='bold')
             ax.set_xlabel('', fontsize=axesFontSize)
+            ax.set_ylim((0,1))
 
             for expertise_std in expertise_stds:
                 results_for_std = results_for_mean.loc[results_for_mean['std']==expertise_std]
@@ -153,11 +159,7 @@ def plot_vs_voters_on_one_page(results_csv_file:str, figure_file:str, columns: l
 
 
 
-num_of_voterss = [
-    # 3, 5, 7,
-                #   9, 11, 21,
-                #   31, 41, 
-                  51]
+num_of_voterss = [3, 5, 7, 9, 11, 21]
 
 expertise_means = [.55, .6, 0.65,
                    .7, .75,  .8,
@@ -167,18 +169,24 @@ expertise_stds = [0.02, 0.03, 0.04,
                   0.07, 0.08, 0.09,
                   0.12, 0.13, 0.14]
 
+distribution="norm"
+results_file = f"results/1000iters-{distribution}.csv"
 
-results_file = f"results/1000iters-beta.csv"
-
-# add_difference_columns(results_file)
-# add_discrete_derivative_columns(results_file)
-# add_ratio_columns(results_file.replace(".csv", "-mean-correct.csv"))
 create_group_results(results_file, mean_1=0.67, mean_2=0.82, std_1=0.05, std_2=0.1)
 
-# plot_vs_mean_on_one_page(results_file, "results/correctness_vs_mean.png",
-#      ["majority_correct", "optimal_correct"],
-#      ["SMR correct", "Optimal correct"],
-#      [3,5,7,9,11,21], expertise_means, expertise_stds, line_at_half=True)
+map_column_codes_to_column_names = {
+        "optimal_is_strong_democracy": "strong demo.",
+        "optimal_is_weak_democracy": "weak demo.",
+        "optimal_is_weak_epistocracy": "weak epis.",
+        "optimal_is_strong_epistocracy": "strong epis.",
+    }
+
+plot_vs_mean_on_one_page(results_file, f"results/optimality_vs_mean-{distribution}.png",
+    map_column_codes_to_column_names,  num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
+
+plot_vs_voters_on_one_page(results_file, f"results/optimality_vs_voters-{distribution}.png",
+    map_column_codes_to_column_names,  num_of_voterss, expertise_means, expertise_stds, line_at_half=True)
+
 
 exit(0)
 
