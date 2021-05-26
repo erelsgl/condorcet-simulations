@@ -42,19 +42,40 @@ def create_group_results(results_csv_file:str, mean_1:float, mean_2:float, std_1
     results.loc[results.query(f'std > {std_2}').index, "std_bucket"] = "Upper"
 
     results_mean = results.groupby(['voters', 'mean_bucket', 'std_bucket']).mean().round(3)
-    results_mean.drop(columns=["iterations","mean","std"], inplace=True)
+    results_mean.drop(columns=["iterations","mean","std","minority_colluding"], inplace=True)
     results_mean.index.names = ["voters", "mean", "std"]
 
     results_mean\
         .rename(columns={
-            "optimal_is_strong_democracy": "st-demo",
-            "optimal_is_weak_democracy": "wk-demo",
-            "optimal_is_weak_epistocracy": "wk-epis",
-            "optimal_is_strong_epistocracy": "st-epis",
-            "optimal_is_expert_rule": "expert",
-            "minority_colluding": "min-coll",
-            "optimal_agrees_majority": "opt=maj"})\
+            "optimal_is_strong_democracy": "strong\ndemocracy",
+            "optimal_is_weak_democracy": "weak\ndemocracy",
+            "optimal_is_weak_epistocracy": "weak\nepistocracy",
+            "optimal_is_strong_epistocracy": "strong\nepistocracy",
+            "optimal_is_expert_rule": "expert\nrule",
+            "optimal_agrees_majority": "optimal\n=majority"})\
         .to_csv(results_csv_file.replace(".csv", "-mean-optimal.csv"), index=True)
+
+
+map_column_codes_to_column_names = {
+        "optimal_is_strong_democracy": "strong demo.",
+        "optimal_is_weak_democracy": "weak demo.",
+        "optimal_is_weak_epistocracy": "weak epis.",
+        "optimal_is_strong_epistocracy": "strong epis.",
+    }
+
+map_column_codes_to_short_names = {
+        "optimal_is_strong_democracy": "sd",
+        "optimal_is_weak_democracy": "wd",
+        "optimal_is_weak_epistocracy": "we",
+        "optimal_is_strong_epistocracy": "se",
+    }
+
+map_column_codes_to_colors = {
+        "optimal_is_strong_democracy": (.99,.99,.8),
+        "optimal_is_weak_democracy": (.7,.9,.7),
+        "optimal_is_weak_epistocracy": (.6,.6,.8),
+        "optimal_is_strong_epistocracy": (.5,.3,.3),
+    }
 
 
 def plot_vs_mean_on_one_page(results_csv_file:str, figure_file:str, 
@@ -105,6 +126,61 @@ def plot_vs_mean_on_one_page(results_csv_file:str, figure_file:str,
     plt.xlabel("mean")
     # plt.show()
     plt.savefig(figure_file)
+
+def pie_by_columns(rows:int, cols:int, row_index:int, col_index:int, row_title:str, col_title:str, values:pandas.DataFrame):
+    subplot_index = row_index*cols+col_index+1
+    fractions = []
+    labels = []
+    colors = []
+    for column,column_name in map_column_codes_to_short_names.items():
+        fraction = values[column].mean()
+        fractions.append(fraction)
+        labels.append(column_name if fraction>0.05 else ""  )
+        colors.append(map_column_codes_to_colors[column])
+    ax = plt.subplot(rows, cols, subplot_index)
+    ax.pie(fractions, labels=labels, labeldistance=0.3, autopct="", normalize=True, radius=1.3, colors=colors,
+        textprops={'fontsize': 8})
+    if row_index==0:
+        ax.set_title(col_title, fontsize=8, fontweight='normal')
+    if col_index==cols-2:
+        ax.text(x=1.5, y=0, s=row_title)
+    return ax
+
+
+def pie_by_voters_and_stds(results_csv_file:str, figure_file:str, map_column_codes_to_column_names:dict,  
+    num_of_voterss:list, expertise_means:list, expertise_stds:list):
+    A4 = (8,11) # A4 page: 8 inch length, 11 inch height
+    plt.figure(figsize=A4, dpi=dpi, facecolor=facecolor, edgecolor=edgecolor)
+    plt.title("Rules by #voters (n) and expertise standard deviation (s)")
+    results = pandas.read_csv(results_csv_file)
+    results_for_means = results[results["mean"].isin(expertise_means)]
+    rows = len(num_of_voterss)
+    cols = len(expertise_stds)+1
+    for row_index, num_of_voters in enumerate(num_of_voterss):
+        results_for_voters = results_for_means.loc[results_for_means['voters']==num_of_voters]
+        for col_index, expertise_std in enumerate(expertise_stds):
+            results_for_std = results_for_voters.loc[results_for_voters['std']==expertise_std]
+            pie_by_columns(rows, cols, row_index, col_index, f"n={num_of_voters}", f"s={expertise_std}", results_for_std)
+    plt.savefig(figure_file)
+
+
+
+def pie_by_means_and_stds(results_csv_file:str, figure_file:str, map_column_codes_to_column_names:dict,  
+    num_of_voterss:list, expertise_means:list, expertise_stds:list):
+    A4 = (8,11) # A4 page: 8 inch length, 11 inch height
+    plt.figure(figsize=A4, dpi=dpi, facecolor=facecolor, edgecolor=edgecolor)
+    results = pandas.read_csv(results_csv_file)
+    results_for_voters = results[results["voters"].isin(num_of_voterss)]
+    rows = len(expertise_means)
+    cols = len(expertise_stds)+1
+    plt.suptitle(f"Rules by expertise mean (m) and standard deviation (s), n={num_of_voterss}")
+    for row_index, expertise_mean in enumerate(expertise_means):
+        results_for_mean = results_for_voters.loc[results_for_voters['mean']==expertise_mean]
+        for col_index, expertise_std in enumerate(expertise_stds):
+            results_for_std = results_for_mean.loc[results_for_mean['std']==expertise_std]
+            pie_by_columns(rows, cols, row_index, col_index, f"m={expertise_mean}", f"s={expertise_std}", results_for_std)
+    plt.savefig(figure_file)
+
 
 
 
@@ -169,23 +245,33 @@ expertise_stds = [0.02, 0.03, 0.04,
                   0.07, 0.08, 0.09,
                   0.12, 0.13, 0.14]
 
-distribution="norm"
+
+# create_group_results(f"results/1000iters-norm.csv", mean_1=0.67, mean_2=0.82, std_1=0.05, std_2=0.1)
+# create_group_results(f"results/1000iters-beta.csv", mean_1=0.67, mean_2=0.82, std_1=0.05, std_2=0.1)
+
+distribution="beta"
 results_file = f"results/1000iters-{distribution}.csv"
 
-create_group_results(results_file, mean_1=0.67, mean_2=0.82, std_1=0.05, std_2=0.1)
 
-map_column_codes_to_column_names = {
-        "optimal_is_strong_democracy": "strong demo.",
-        "optimal_is_weak_democracy": "weak demo.",
-        "optimal_is_weak_epistocracy": "weak epis.",
-        "optimal_is_strong_epistocracy": "strong epis.",
-    }
+# pie_by_voters_and_stds(results_file, f"results/optimality_by_voters_and_stds-{distribution}.png",
+#     map_column_codes_to_short_names,  
+#     num_of_voterss=num_of_voterss, 
+#     expertise_means=[0.95],
+#     expertise_stds=[0.02, 0.04, 0.08, 0.14])
 
-plot_vs_mean_on_one_page(results_file, f"results/optimality_vs_mean-{distribution}.png",
-    map_column_codes_to_column_names,  num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
+for num_of_voters in num_of_voterss:
+    pie_by_means_and_stds(results_file, f"results/optimality_by_means_and_stds_{num_of_voters}-{distribution}.png",
+        map_column_codes_to_short_names,  
+        num_of_voterss=[num_of_voters], 
+        expertise_means=expertise_means,#[.55,.65,.75,.85,.95],
+        expertise_stds=expertise_stds,#[0.02, 0.04, 0.08, 0.14]
+        )
 
-plot_vs_voters_on_one_page(results_file, f"results/optimality_vs_voters-{distribution}.png",
-    map_column_codes_to_column_names,  num_of_voterss, expertise_means, expertise_stds, line_at_half=True)
+# plot_vs_mean_on_one_page(results_file, f"results/optimality_vs_mean-{distribution}.png",
+#     map_column_codes_to_column_names,  num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
+
+# plot_vs_voters_on_one_page(results_file, f"results/optimality_vs_voters-{distribution}.png",
+#     map_column_codes_to_column_names,  num_of_voterss, expertise_means, expertise_stds, line_at_half=True)
 
 
 exit(0)

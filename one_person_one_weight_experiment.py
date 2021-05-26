@@ -16,7 +16,7 @@ INDEX_COLUMNS = ["iterations","voters", "mean", "mean_bucket", "std", "std_bucke
 OPTIMALITY_COLUMNS = [
                 "optimal_is_strong_democracy", "optimal_is_weak_democracy",
                 "optimal_is_weak_epistocracy", "optimal_is_strong_epistocracy",
-                "optimal_is_expert_rule",      "minority_colluding"]
+                "optimal_is_expert_rule",     ]
 AGREEMENT_COLUMNS = ["optimal_agrees_majority"]
 REPORTED_COLUMNS = OPTIMALITY_COLUMNS + AGREEMENT_COLUMNS
 TABLE_COLUMNS = INDEX_COLUMNS + REPORTED_COLUMNS
@@ -103,7 +103,7 @@ def create_results_revision(results_csv_file:str, num_of_iterations:int, num_of_
                     ("optimal_is_strong_epistocracy",  optimal_strong_epistocracy_sum / num_of_iterations),
 
                     ("optimal_is_expert_rule", optimal_expert_rule_sum /num_of_iterations),
-                    ("minority_colluding", minority_colluding_sum / num_of_iterations),
+                    # ("minority_colluding", minority_colluding_sum / num_of_iterations),
 
                     ("optimal_agrees_majority", optimal_agrees_majority_sum / num_of_iterations),
                 )))

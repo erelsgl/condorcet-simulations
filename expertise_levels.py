@@ -67,6 +67,8 @@ def beta_expertise_levels(mean:float, std:float, size:int):
     a = (mean1**2) * ( (1-mean1)/(std1**2) - (1/mean1) )
     b = a*(1/mean1 - 1)
 
+    print(f"a={a} b={b}")
+
     try:
         values = beta.rvs(a, b, loc=loc, scale=scale, size=size)
         return -np.sort(-values)
@@ -85,6 +87,7 @@ if __name__ == "__main__":
     print(truncnorm_expertise_levels(mean=0.6, std=0.1, size=11))
     print(beta_expertise_levels(mean=0.6, std=0.1, size=11))
     print(beta_expertise_levels(mean=3/4, std=1/np.sqrt(48), size=11))   # equivalent to uniform (std=0.14433)
+    print(beta_expertise_levels(mean=0.75, std=0.14, size=11))   # equivalent to uniform (std=0.14433)
     # print(truncnorm_expertise_levels(mean=0.6, std=0, size=11))   # Division by zero error
 
 
