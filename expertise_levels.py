@@ -12,8 +12,8 @@ from scipy.stats import truncnorm, beta
 def fixed_expertise_levels(mean:float, size:int):
 	return np.array([mean]*size)
 
-MIN_PROBABILITY=0.5
-MAX_PROBABILITY=1.0
+MIN_PROBABILITY=0.501
+MAX_PROBABILITY=0.999
 
 def truncnorm_expertise_levels(mean:float, std:float, size:int):
     """
@@ -81,13 +81,15 @@ def beta_expertise_levels(mean:float, std:float, size:int):
 
 if __name__ == "__main__":
     import doctest
-    (failures,tests) = doctest.testmod(report=True)
-    print ("{} failures, {} tests".format(failures,tests))
+    # (failures,tests) = doctest.testmod(report=True)
+    # print ("{} failures, {} tests".format(failures,tests))
 
     print(truncnorm_expertise_levels(mean=0.6, std=0.1, size=11))
     print(beta_expertise_levels(mean=0.6, std=0.1, size=11))
     print(beta_expertise_levels(mean=3/4, std=1/np.sqrt(48), size=11))   # equivalent to uniform (std=0.14433)
-    print(beta_expertise_levels(mean=0.75, std=0.14, size=11))   # equivalent to uniform (std=0.14433)
+    print(beta_expertise_levels(mean=0.55, std=0.14, size=11))   # almost equivalent to uniform 
+    print(beta_expertise_levels(mean=0.75, std=0.14, size=11))   # almost equivalent to uniform 
+    print(beta_expertise_levels(mean=0.95, std=0.14, size=11))   
     # print(truncnorm_expertise_levels(mean=0.6, std=0, size=11))   # Division by zero error
 
 

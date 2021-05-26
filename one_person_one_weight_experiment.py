@@ -62,19 +62,16 @@ def create_results_revision(results_csv_file:str, num_of_iterations:int, num_of_
                     if (debug_committees): print(committee)
                     if num_of_voters <= 21:
                         is_optimal_strong_democracy = committee.is_optimal_strong_democracy()
-                        if (num_of_voters<=21):
-                            is_optimal_weak_democracy = committee.is_optimal_weak_democracy()
-                            is_optimal_weak_epistocracy = not is_optimal_weak_democracy
-                        else:
-                            is_optimal_weak_democracy = is_optimal_weak_epistocracy = False
-                        if (num_of_voters<=51):
-                            is_optimal_strong_epistocracy = committee.is_optimal_strong_epistocracy()
-                        else:
-                            is_optimal_strong_epistocracy = False
+                        is_optimal_weak_democracy = committee.is_optimal_weak_democracy()
+                        is_optimal_weak_epistocracy = not is_optimal_weak_democracy
+                        is_optimal_strong_epistocracy = committee.is_optimal_strong_epistocracy()
+
+                        if is_optimal_strong_democracy and is_optimal_strong_epistocracy:
+                            raise ValueError(f"Both sd and se are optimal - bug! committee={committee}")
 
                         optimal_strong_democracy_sum += is_optimal_strong_democracy
-                        optimal_weak_democracy_sum   += is_optimal_weak_democracy  and not is_optimal_strong_democracy
-                        optimal_weak_epistocracy_sum += is_optimal_weak_epistocracy and not is_optimal_strong_epistocracy
+                        optimal_weak_democracy_sum   += (is_optimal_weak_democracy  and not is_optimal_strong_democracy)
+                        optimal_weak_epistocracy_sum += (is_optimal_weak_epistocracy and not is_optimal_strong_epistocracy)
                         optimal_strong_epistocracy_sum += is_optimal_strong_epistocracy
                         optimal_expert_rule_sum += committee.is_optimal_minority_decisiveness(minority_size=1)
 
@@ -112,8 +109,7 @@ random_expertise_levels=beta_expertise_levels
 # distribution="norm"
 # random_expertise_levels=truncnorm_expertise_levels
 
-# num_of_voterss = [3, 5, 7, 9, 11, 21,]
-num_of_voterss = [31,41,51,]
+num_of_voterss = [3, 5, 7, 9, 11, 21, 31, 41, 51]
 
 expertise_means = [.55, .6, 0.65,
                    .7, .75,  .8,

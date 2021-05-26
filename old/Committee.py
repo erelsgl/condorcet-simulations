@@ -46,8 +46,7 @@ class Committee:
         >>> Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).is_optimal_strong_democracy()
         False
         """
-        minority_weight = sum(self.weights[0:self.minority_size])
-        return minority_weight <= self.half_total_weight
+        return not self.is_optimal_minority_decisiveness(self.minority_size)
 
 
     def is_optimal_weak_democracy(self)->bool:
@@ -67,18 +66,7 @@ class Committee:
         >>> Committee(np.array([0.99, 0.9, 0.6, 0.6, 0.6])).is_optimal_weak_democracy()
         False
         """
-        majority_weights = self.weights[0:self.committee_size-1]
-        sum_majority_weights = sum(majority_weights)
-        least_weight = self.weights[-1]
-        for majority_subset in powerset(majority_weights[1:]):  # Loop over all unordered partitions of the majority
-            sum_majority_subset = sum(majority_subset)
-            sum_complement_subset = sum_majority_weights - sum_majority_subset
-            weight_difference_in_majority = np.abs(sum_majority_subset - sum_complement_subset)
-            if least_weight > weight_difference_in_majority:
-                # print("least_weight={} majority_subset={} sum_majority_subset={} sum_complement_subset={}".
-                #       format(np.round(least_weight,3),np.round(majority_subset,3),np.round(sum_majority_subset,3),np.round(sum_complement_subset,3)))
-                return True # the least-weight agent is essential in at least one case
-        return False # the least-weight agent is never essential
+        return not self.is_optimal_majority_tyranny()
 
 
     def is_optimal_weak_epistocracy(self)->bool:
@@ -101,7 +89,7 @@ class Committee:
         >>> Committee(np.array([0.99, 0.9, 0.6, 0.6, 0.6])).is_optimal_weak_epistocracy()
         True
         """
-        return not self.is_optimal_weak_democracy()
+        return self.is_optimal_majority_tyranny()
 
 
     def is_optimal_strong_epistocracy(self)->bool:
@@ -133,7 +121,7 @@ class Committee:
             if sum_majority_weights > weight_difference_in_minority:
                 # print("sum_majority_weights={} minority_subset={} sum_minority_subset={} sum_complement_subset={}".
                 #       format(np.round(sum_majority_weights,3),np.round(minority_subset,3),np.round(sum_minority_subset,3),np.round(sum_complement_subset,3)))
-                return False    # the majority is essential in at least one case
+                return False    # the majority is effective in at least one case
         return True             # the majority is never essential
 
 
@@ -168,6 +156,42 @@ class Committee:
         minority_weight = sum(self.weights[0:minority_size])
         return minority_weight > self.half_total_weight
 
+
+
+    def is_optimal_majority_tyranny(self)->bool:
+        """
+        :param sorted_expertise_levels: a list of expertise-levels (numbers in [0.5,1]), sorted from high to low.
+        :return: whether the optimal decision rule allows majority tyranny,
+        meaning that some voters have zero weight and do not affect the decision.
+
+        NOTE: the optimal rule is majority-tyrannic, iff it is NOT a weak-democracy.
+        Hence, this function is the opposite of is_optimal_weak_democracy.
+
+        >>> Committee(np.array([0.8, 0.8, 0.8])).is_optimal_majority_tyranny()
+        False
+        >>> Committee(np.array([0.9, 0.6, 0.6])).is_optimal_majority_tyranny()
+        True
+        >>> Committee(np.array([0.8, 0.8, 0.8, 0.8, 0.8])).is_optimal_majority_tyranny()
+        False
+        >>> Committee(np.array([0.9, 0.9, 0.6, 0.6, 0.6])).is_optimal_majority_tyranny()
+        False
+        >>> Committee(np.array([0.99, 0.99, 0.6, 0.6, 0.6])).is_optimal_majority_tyranny()
+        False
+        >>> Committee(np.array([0.99, 0.9, 0.6, 0.6, 0.6])).is_optimal_majority_tyranny()
+        True
+        """
+        majority_weights = self.weights[0:self.committee_size-1]
+        sum_majority_weights = sum(majority_weights)
+        least_weight = self.weights[-1]
+        for majority_subset in powerset(majority_weights[1:]):  # Loop over all unordered partitions of the minority
+            sum_majority_subset = sum(majority_subset)
+            sum_complement_subset = sum_majority_weights - sum_majority_subset
+            weight_difference_in_majority = np.abs(sum_majority_subset - sum_complement_subset)
+            if least_weight > weight_difference_in_majority:
+                # print("least_weight={} majority_subset={} sum_majority_subset={} sum_complement_subset={}".
+                #       format(np.round(least_weight,3),np.round(majority_subset,3),np.round(sum_majority_subset,3),np.round(sum_complement_subset,3)))
+                return False # the least-weight agent is essential in at least one case
+        return True # the least-weight agent is never essential
 
 
 

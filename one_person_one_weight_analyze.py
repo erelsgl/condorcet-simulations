@@ -9,6 +9,7 @@ Author: Erel Segal-Halevi
 """
 
 from experiment import *
+import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -42,7 +43,7 @@ def create_group_results(results_csv_file:str, mean_1:float, mean_2:float, std_1
     results.loc[results.query(f'std > {std_2}').index, "std_bucket"] = "Upper"
 
     results_mean = results.groupby(['voters', 'mean_bucket', 'std_bucket']).mean().round(3)
-    results_mean.drop(columns=["iterations","mean","std","minority_colluding"], inplace=True)
+    results_mean.drop(columns=["iterations","mean","std"], inplace=True)
     results_mean.index.names = ["voters", "mean", "std"]
 
     results_mean\
@@ -106,7 +107,7 @@ def plot_vs_mean_on_one_page(results_csv_file:str, figure_file:str,
                 results_for_std = results_for_voters.loc[results_for_voters['std']==expertise_std]
                 x_values = results_for_std['mean']
                 y_values = results_for_std[column]
-                ax.plot(x_values, y_values, markersize=markerSize, label="std={}".format(expertise_std))
+                ax.plot(x_values, y_values, markersize=markerSize, label=f"std={expertise_std}")
 
                 if line_at_half:
                     ax.plot(x_values, x_values, color="black", label="")  # show the mean
@@ -116,7 +117,7 @@ def plot_vs_mean_on_one_page(results_csv_file:str, figure_file:str,
                 ax.legend(prop={'size': legendFontSize}, bbox_to_anchor=(1.5, 1))
 
             if col_index==cols-2:
-                ax.text(x=max(expertise_means)*1.1, y=max(y_values)/2, s='n={}'.format(num_of_voters))
+                ax.text(x=max(expertise_means)*1.1, y=max(y_values)/2, s=f'n={num_of_voters}')
 
             if col_index>0:
                 plt.setp(ax.get_yticklabels(), visible=False)
@@ -154,7 +155,7 @@ def plot_vs_voters_on_one_page(results_csv_file:str, figure_file:str,
                 results_for_std = results_for_mean.loc[results_for_mean['std']==expertise_std]
                 x_values = results_for_std['voters']
                 y_values = results_for_std[column]
-                ax.plot(x_values, y_values, markersize=markerSize, label="std={}".format(expertise_std))
+                ax.plot(x_values, y_values, markersize=markerSize, label=f"std={expertise_std}")
 
                 if max(y_values)>0.5 or line_at_half:
                     ax.plot(x_values, [0.5]*len(x_values), color="black", label="")
@@ -163,7 +164,7 @@ def plot_vs_voters_on_one_page(results_csv_file:str, figure_file:str,
                 ax.legend(prop={'size': legendFontSize}, bbox_to_anchor=(1.5, 1))
 
             if col_index==cols-2:
-                ax.text(x=max(num_of_voterss)*1.1, y=max(y_values)/2, s='mean={}'.format(expertise_mean))
+                ax.text(x=max(num_of_voterss)*1.1, y=max(y_values)/2, s=f'mean={expertise_mean}')
 
             if col_index>0:
                 plt.setp(ax.get_yticklabels(), visible=False)
@@ -194,6 +195,8 @@ def pie_by_columns(rows:int, cols:int, row_index:int, col_index:int, row_title:s
         ax.set_title(col_title, fontsize=8, fontweight='normal')
     if col_index==cols-2:
         ax.text(x=1.5, y=0, s=row_title)
+    if np.abs(1-sum(fractions))>0.05:
+        ax.set_title(f"fractions={fractions}, sum={sum(fractions)}")
     return ax
 
 
@@ -215,7 +218,7 @@ def pie_by_voters_and_stds(results_csv_file:str, figure_file:str, map_column_cod
 
 
 
-def pie_by_means_and_stds(results_csv_file:str, figure_file:str, map_column_codes_to_column_names:dict,  
+def pie_by_means_and_stds(results_csv_file:str, figure_file:str, 
     num_of_voterss:list, expertise_means:list, expertise_stds:list):
     A4 = (8,11) # A4 page: 8 inch length, 11 inch height
     plt.figure(figsize=A4, dpi=dpi, facecolor=facecolor, edgecolor=edgecolor)
@@ -240,7 +243,7 @@ def plot_vs_voters(results_csv_file:str, column: str, num_of_voterss:list, exper
     for index,expertise_mean in enumerate(expertise_means):
         results_for_mean = results.loc[results['mean']==expertise_mean]
         ax = plt.subplot(rows, cols, map_index_to_subplot_index[index])
-        ax.set_title('mean={}'.format(expertise_mean),
+        ax.set_title(f'mean={expertise_mean}',
                      fontsize=titleFontSize, weight='bold')
         ax.set_xlabel('', fontsize=axesFontSize)
 
@@ -248,7 +251,7 @@ def plot_vs_voters(results_csv_file:str, column: str, num_of_voterss:list, exper
             results_for_std = results_for_mean.loc[results_for_mean['std']==expertise_std]
             x_values = results_for_std['voters']
             y_values = results_for_std[column]
-            ax.plot(x_values, y_values, markersize=markerSize, label="std={}".format(expertise_std))
+            ax.plot(x_values, y_values, markersize=markerSize, label="std={expertise_std}")
             if max(y_values)>0.5 or line_at_half:
                 ax.plot(x_values, [0.5]*len(x_values), color="black", label="")
         if index==5:
@@ -256,7 +259,7 @@ def plot_vs_voters(results_csv_file:str, column: str, num_of_voterss:list, exper
 
     plt.xticks(x_values.tolist(), fontsize=axesFontSize)
     folder, _ = os.path.split(results_csv_file)
-    plt.savefig("{}/{}_vs_voters.png".format(folder, column))
+    plt.savefig(f"{folder}/{column}_vs_voters.png")
     plt.draw()
 
 
@@ -272,9 +275,10 @@ expertise_stds = [0.02, 0.03, 0.04,
 
 
 # create_group_results(f"results/1000iters-norm.csv", mean_1=0.67, mean_2=0.82, std_1=0.05, std_2=0.1)
-# create_group_results(f"results/1000iters-beta.csv", mean_1=0.67, mean_2=0.82, std_1=0.05, std_2=0.1)
+create_group_results(f"results/1000iters-beta.csv", mean_1=0.67, mean_2=0.82, std_1=0.05, std_2=0.1)
 
 distribution="beta"
+# distribution="norm"
 results_file = f"results/1000iters-{distribution}.csv"
 
 
@@ -284,13 +288,12 @@ results_file = f"results/1000iters-{distribution}.csv"
 #     expertise_means=[0.95],
 #     expertise_stds=[0.02, 0.04, 0.08, 0.14])
 
-# for num_of_voters in num_of_voterss:
-#     pie_by_means_and_stds(results_file, f"results/optimality_by_means_and_stds_{num_of_voters}-{distribution}.png",
-#         map_column_codes_to_short_names,  
-#         num_of_voterss=[num_of_voters], 
-#         expertise_means=expertise_means,#[.55,.65,.75,.85,.95],
-#         expertise_stds=expertise_stds,#[0.02, 0.04, 0.08, 0.14]
-#         )
+for num_of_voters in num_of_voterss:
+    pie_by_means_and_stds(results_file, f"results/optimality_by_means_and_stds_{num_of_voters}-{distribution}.png",
+        num_of_voterss=[num_of_voters], 
+        expertise_means=expertise_means,#[.55,.65,.75,.85,.95],
+        expertise_stds=expertise_stds,#[0.02, 0.04, 0.08, 0.14]
+        )
 
 # plot_vs_mean_on_one_page(results_file, f"results/optimality_vs_mean-{distribution}.png",
 #     map_column_codes_to_column_names,  num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
@@ -298,7 +301,7 @@ results_file = f"results/1000iters-{distribution}.csv"
 # plot_vs_voters_on_one_page(results_file, f"results/optimality_vs_voters-{distribution}.png",
 #     map_column_codes_to_column_names,  num_of_voterss, expertise_means, expertise_stds, line_at_half=True)
 
-plot_vs_voters(results_file, "optimal_agrees_majority", [3, 5, 7, 9, 11, 21, 31, 41, 51], expertise_means, expertise_stds, line_at_half=False)
+# plot_vs_voters(results_file, "optimal_agrees_majority", [3, 5, 7, 9, 11, 21, 31, 41, 51], expertise_means, expertise_stds, line_at_half=False)
 
 
 exit(0)
