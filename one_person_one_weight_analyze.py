@@ -203,7 +203,7 @@ def pie_by_columns(rows:int, cols:int, row_index:int, col_index:int, row_title:s
 def pie_by_voters_and_stds(results_csv_file:str, figure_file:str, map_column_codes_to_column_names:dict,  
     num_of_voterss:list, expertise_means:list, expertise_stds:list):
     A4 = (8,11) # A4 page: 8 inch length, 11 inch height
-    plt.figure(figsize=A4, dpi=dpi, facecolor=facecolor, edgecolor=edgecolor)
+    plt.figure(figsize=(8,8), dpi=dpi, facecolor=facecolor, edgecolor=edgecolor)
     plt.title("Rules by #voters (n) and expertise standard deviation (s)")
     results = pandas.read_csv(results_csv_file)
     results_for_means = results[results["mean"].isin(expertise_means)]
@@ -221,7 +221,7 @@ def pie_by_voters_and_stds(results_csv_file:str, figure_file:str, map_column_cod
 def pie_by_means_and_stds(results_csv_file:str, figure_file:str, 
     num_of_voterss:list, expertise_means:list, expertise_stds:list):
     A4 = (8,11) # A4 page: 8 inch length, 11 inch height
-    plt.figure(figsize=A4, dpi=dpi, facecolor=facecolor, edgecolor=edgecolor)
+    plt.figure(figsize=(8,8), dpi=dpi, facecolor=facecolor, edgecolor=edgecolor)
     results = pandas.read_csv(results_csv_file)
     results_for_voters = results[results["voters"].isin(num_of_voterss)]
     rows = len(expertise_means)
@@ -275,18 +275,11 @@ expertise_stds = [0.02, 0.03, 0.04,
 
 
 # create_group_results(f"results/1000iters-norm.csv", mean_1=0.67, mean_2=0.82, std_1=0.05, std_2=0.1)
-create_group_results(f"results/1000iters-beta.csv", mean_1=0.67, mean_2=0.82, std_1=0.05, std_2=0.1)
+# create_group_results(f"results/1000iters-beta.csv", mean_1=0.67, mean_2=0.82, std_1=0.05, std_2=0.1)
 
-distribution="beta"
-# distribution="norm"
+# distribution="beta"
+distribution="norm"
 results_file = f"results/1000iters-{distribution}.csv"
-
-
-# pie_by_voters_and_stds(results_file, f"results/optimality_by_voters_and_stds-{distribution}.png",
-#     map_column_codes_to_short_names,  
-#     num_of_voterss=num_of_voterss, 
-#     expertise_means=[0.95],
-#     expertise_stds=[0.02, 0.04, 0.08, 0.14])
 
 for num_of_voters in num_of_voterss:
     pie_by_means_and_stds(results_file, f"results/optimality_by_means_and_stds_{num_of_voters}-{distribution}.png",
