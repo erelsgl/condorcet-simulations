@@ -67,7 +67,7 @@ def beta_expertise_levels(mean:float, std:float, size:int):
     a = (mean1**2) * ( (1-mean1)/(std1**2) - (1/mean1) )
     b = a*(1/mean1 - 1)
 
-    print(f"a={a} b={b}")
+    # print(f"a={a} b={b}")
 
     try:
         values = beta.rvs(a, b, loc=loc, scale=scale, size=size)

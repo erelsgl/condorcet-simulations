@@ -127,6 +127,56 @@ def plot_vs_mean_on_one_page(results_csv_file:str, figure_file:str,
     # plt.show()
     plt.savefig(figure_file)
 
+def plot_vs_voters_on_one_page(results_csv_file:str, figure_file:str, 
+    map_column_codes_to_column_names:dict, num_of_voterss:list, expertise_means:list, expertise_stds:list, line_at_half:bool=False):
+    A4 = (8,11) # A4 page: 8 inch length, 11 inch height
+    plt.figure(figsize=A4, dpi=dpi, facecolor=facecolor, edgecolor=edgecolor)
+
+    results = pandas.read_csv(results_csv_file)
+
+    rows = len(expertise_means)
+    cols = len(map_column_codes_to_column_names)+1
+    # top_left_axis = plt.subplot(rows, cols, 1)
+    for row_index, expertise_mean in enumerate(expertise_means):
+        results_for_mean = results.loc[results['mean']==expertise_mean]
+        for col_index, (column,column_name) in enumerate(map_column_codes_to_column_names.items()):
+            subplot_index = row_index*cols+col_index+1
+            # ax = plt.subplot(rows, cols, subplot_index, sharex=top_left_axis, sharey=top_left_axis)
+            ax = plt.subplot(rows, cols, subplot_index)
+
+            if row_index==0:
+                ax.set_title(column_name,
+                             fontsize=11, weight='bold')
+            ax.set_xlabel('', fontsize=axesFontSize)
+            ax.set_ylim((0,1))
+
+            for expertise_std in expertise_stds:
+                results_for_std = results_for_mean.loc[results_for_mean['std']==expertise_std]
+                x_values = results_for_std['voters']
+                y_values = results_for_std[column]
+                ax.plot(x_values, y_values, markersize=markerSize, label="std={}".format(expertise_std))
+
+                if max(y_values)>0.5 or line_at_half:
+                    ax.plot(x_values, [0.5]*len(x_values), color="black", label="")
+
+            if row_index==2 and col_index==cols-2:
+                ax.legend(prop={'size': legendFontSize}, bbox_to_anchor=(1.5, 1))
+
+            if col_index==cols-2:
+                ax.text(x=max(num_of_voterss)*1.1, y=max(y_values)/2, s='mean={}'.format(expertise_mean))
+
+            if col_index>0:
+                plt.setp(ax.get_yticklabels(), visible=False)
+            if row_index<rows-1:
+                plt.setp(ax.get_xticklabels(), visible=False)
+
+    plt.xlabel("#voters")
+    folder, _ = os.path.split(results_csv_file)
+    plt.savefig(figure_file)
+    plt.draw()
+
+
+
 def pie_by_columns(rows:int, cols:int, row_index:int, col_index:int, row_title:str, col_title:str, values:pandas.DataFrame):
     subplot_index = row_index*cols+col_index+1
     fractions = []
@@ -183,56 +233,31 @@ def pie_by_means_and_stds(results_csv_file:str, figure_file:str, map_column_code
 
 
 
-
-def plot_vs_voters_on_one_page(results_csv_file:str, figure_file:str, 
-    map_column_codes_to_column_names:dict, num_of_voterss:list, expertise_means:list, expertise_stds:list, line_at_half:bool=False):
-    A4 = (8,11) # A4 page: 8 inch length, 11 inch height
-    plt.figure(figsize=A4, dpi=dpi, facecolor=facecolor, edgecolor=edgecolor)
-
+def plot_vs_voters(results_csv_file:str, column: str, num_of_voterss:list, expertise_means:list, expertise_stds:list, line_at_half:bool=False):
+    plt.figure(figsize=figsize, dpi=dpi, facecolor=facecolor, edgecolor=edgecolor)
     results = pandas.read_csv(results_csv_file)
 
-    rows = len(expertise_means)
-    cols = len(map_column_codes_to_column_names)+1
-    # top_left_axis = plt.subplot(rows, cols, 1)
-    for row_index, expertise_mean in enumerate(expertise_means):
+    for index,expertise_mean in enumerate(expertise_means):
         results_for_mean = results.loc[results['mean']==expertise_mean]
-        for col_index, (column,column_name) in enumerate(map_column_codes_to_column_names.items()):
-            subplot_index = row_index*cols+col_index+1
-            # ax = plt.subplot(rows, cols, subplot_index, sharex=top_left_axis, sharey=top_left_axis)
-            ax = plt.subplot(rows, cols, subplot_index)
+        ax = plt.subplot(rows, cols, map_index_to_subplot_index[index])
+        ax.set_title('mean={}'.format(expertise_mean),
+                     fontsize=titleFontSize, weight='bold')
+        ax.set_xlabel('', fontsize=axesFontSize)
 
-            if row_index==0:
-                ax.set_title(column_name,
-                             fontsize=11, weight='bold')
-            ax.set_xlabel('', fontsize=axesFontSize)
-            ax.set_ylim((0,1))
+        for expertise_std in expertise_stds:
+            results_for_std = results_for_mean.loc[results_for_mean['std']==expertise_std]
+            x_values = results_for_std['voters']
+            y_values = results_for_std[column]
+            ax.plot(x_values, y_values, markersize=markerSize, label="std={}".format(expertise_std))
+            if max(y_values)>0.5 or line_at_half:
+                ax.plot(x_values, [0.5]*len(x_values), color="black", label="")
+        if index==5:
+            ax.legend(prop={'size': legendFontSize}, bbox_to_anchor=(2, 1))
 
-            for expertise_std in expertise_stds:
-                results_for_std = results_for_mean.loc[results_for_mean['std']==expertise_std]
-                x_values = results_for_std['voters']
-                y_values = results_for_std[column]
-                ax.plot(x_values, y_values, markersize=markerSize, label="std={}".format(expertise_std))
-
-                if max(y_values)>0.5 or line_at_half:
-                    ax.plot(x_values, [0.5]*len(x_values), color="black", label="")
-
-            if row_index==2 and col_index==cols-2:
-                ax.legend(prop={'size': legendFontSize}, bbox_to_anchor=(1.5, 1))
-
-            if col_index==cols-2:
-                ax.text(x=max(num_of_voterss)*1.1, y=max(y_values)/2, s='mean={}'.format(expertise_mean))
-
-            if col_index>0:
-                plt.setp(ax.get_yticklabels(), visible=False)
-            if row_index<rows-1:
-                plt.setp(ax.get_xticklabels(), visible=False)
-
-    plt.xlabel("#voters")
+    plt.xticks(x_values.tolist(), fontsize=axesFontSize)
     folder, _ = os.path.split(results_csv_file)
-    plt.savefig(figure_file)
+    plt.savefig("{}/{}_vs_voters.png".format(folder, column))
     plt.draw()
-
-
 
 
 num_of_voterss = [3, 5, 7, 9, 11, 21]
@@ -259,19 +284,21 @@ results_file = f"results/1000iters-{distribution}.csv"
 #     expertise_means=[0.95],
 #     expertise_stds=[0.02, 0.04, 0.08, 0.14])
 
-for num_of_voters in num_of_voterss:
-    pie_by_means_and_stds(results_file, f"results/optimality_by_means_and_stds_{num_of_voters}-{distribution}.png",
-        map_column_codes_to_short_names,  
-        num_of_voterss=[num_of_voters], 
-        expertise_means=expertise_means,#[.55,.65,.75,.85,.95],
-        expertise_stds=expertise_stds,#[0.02, 0.04, 0.08, 0.14]
-        )
+# for num_of_voters in num_of_voterss:
+#     pie_by_means_and_stds(results_file, f"results/optimality_by_means_and_stds_{num_of_voters}-{distribution}.png",
+#         map_column_codes_to_short_names,  
+#         num_of_voterss=[num_of_voters], 
+#         expertise_means=expertise_means,#[.55,.65,.75,.85,.95],
+#         expertise_stds=expertise_stds,#[0.02, 0.04, 0.08, 0.14]
+#         )
 
 # plot_vs_mean_on_one_page(results_file, f"results/optimality_vs_mean-{distribution}.png",
 #     map_column_codes_to_column_names,  num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
 
 # plot_vs_voters_on_one_page(results_file, f"results/optimality_vs_voters-{distribution}.png",
 #     map_column_codes_to_column_names,  num_of_voterss, expertise_means, expertise_stds, line_at_half=True)
+
+plot_vs_voters(results_file, "optimal_agrees_majority", [3, 5, 7, 9, 11, 21, 31, 41, 51], expertise_means, expertise_stds, line_at_half=False)
 
 
 exit(0)

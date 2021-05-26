@@ -53,7 +53,6 @@ def create_results_revision(results_csv_file:str, num_of_iterations:int, num_of_
                 optimal_weak_epistocracy_sum = 0
                 optimal_strong_epistocracy_sum = 0
                 optimal_expert_rule_sum = 0
-                minority_colluding_sum = 0
                 optimal_agrees_majority_sum = 0
 
                 if num_of_voters >= 21 and num_of_iterations > 100:
@@ -61,34 +60,29 @@ def create_results_revision(results_csv_file:str, num_of_iterations:int, num_of_
                 for _ in range(num_of_iterations):
                     committee = Committee(random_expertise_levels(expertise_mean, expertise_std, num_of_voters))
                     if (debug_committees): print(committee)
-                    is_optimal_strong_democracy = committee.is_optimal_strong_democracy()
-                    if (num_of_voters<=21):
-                        is_optimal_weak_democracy = committee.is_optimal_weak_democracy()
-                        is_optimal_weak_epistocracy = not is_optimal_weak_democracy
-                    else:
-                        is_optimal_weak_democracy = is_optimal_weak_epistocracy = False
-                    if (num_of_voters<=51):
-                        is_optimal_strong_epistocracy = committee.is_optimal_strong_epistocracy()
-                    else:
-                        is_optimal_strong_epistocracy = False
+                    if num_of_voters <= 21:
+                        is_optimal_strong_democracy = committee.is_optimal_strong_democracy()
+                        if (num_of_voters<=21):
+                            is_optimal_weak_democracy = committee.is_optimal_weak_democracy()
+                            is_optimal_weak_epistocracy = not is_optimal_weak_democracy
+                        else:
+                            is_optimal_weak_democracy = is_optimal_weak_epistocracy = False
+                        if (num_of_voters<=51):
+                            is_optimal_strong_epistocracy = committee.is_optimal_strong_epistocracy()
+                        else:
+                            is_optimal_strong_epistocracy = False
 
-                    optimal_strong_democracy_sum += is_optimal_strong_democracy
-                    optimal_weak_democracy_sum   += is_optimal_weak_democracy  and not is_optimal_strong_democracy
-                    optimal_weak_epistocracy_sum += is_optimal_weak_epistocracy and not is_optimal_strong_epistocracy
-                    optimal_strong_epistocracy_sum += is_optimal_strong_epistocracy
-                    optimal_expert_rule_sum += committee.is_optimal_minority_decisiveness(minority_size=1)
-                    minority_colluding_sum += committee.fraction_minority_colluding(num_of_decisions=1)
+                        optimal_strong_democracy_sum += is_optimal_strong_democracy
+                        optimal_weak_democracy_sum   += is_optimal_weak_democracy  and not is_optimal_strong_democracy
+                        optimal_weak_epistocracy_sum += is_optimal_weak_epistocracy and not is_optimal_strong_epistocracy
+                        optimal_strong_epistocracy_sum += is_optimal_strong_epistocracy
+                        optimal_expert_rule_sum += committee.is_optimal_minority_decisiveness(minority_size=1)
 
                     for _ in range(num_of_decisions):
                         vote = committee.vote()
-
                         optimal_vote  = committee.optimal_weighted_rule(vote)
                         majority_vote = committee.simple_majority_rule(vote)
-                        expert_vote = committee.expert_rule(vote)
-                        compromise_minority_vote = committee.compromise_weights_rule(vote)
-                        compromose_strongmajority_vote = committee.compromise_strongmajority_rule(vote)
                         optimal_agrees_majority_sum += (optimal_vote==majority_vote)/num_of_decisions
-
 
                 results_table.add(OrderedDict((
                     ("iterations", num_of_iterations),
@@ -96,15 +90,11 @@ def create_results_revision(results_csv_file:str, num_of_iterations:int, num_of_
                     ("mean", expertise_mean),
                     ("std", expertise_std),
 
-                    #  majority rule is optimal iff it is NOT optimal to let colluding minority decide:
                     ("optimal_is_strong_democracy", optimal_strong_democracy_sum / num_of_iterations),
                     ("optimal_is_weak_democracy",  optimal_weak_democracy_sum / num_of_iterations),
                     ("optimal_is_weak_epistocracy",  optimal_weak_epistocracy_sum / num_of_iterations),
                     ("optimal_is_strong_epistocracy",  optimal_strong_epistocracy_sum / num_of_iterations),
-
                     ("optimal_is_expert_rule", optimal_expert_rule_sum /num_of_iterations),
-                    # ("minority_colluding", minority_colluding_sum / num_of_iterations),
-
                     ("optimal_agrees_majority", optimal_agrees_majority_sum / num_of_iterations),
                 )))
     results_table.done()
@@ -116,14 +106,14 @@ def create_results_revision(results_csv_file:str, num_of_iterations:int, num_of_
 
 num_of_iterations = 1000
 
-# distribution="beta"
-# random_expertise_levels=beta_expertise_levels
+distribution="beta"
+random_expertise_levels=beta_expertise_levels
 
-distribution="norm"
-random_expertise_levels=truncnorm_expertise_levels
+# distribution="norm"
+# random_expertise_levels=truncnorm_expertise_levels
 
 # num_of_voterss = [3, 5, 7, 9, 11, 21,]
-num_of_voterss = [21,]
+num_of_voterss = [31,41,51,]
 
 expertise_means = [.55, .6, 0.65,
                    .7, .75,  .8,
