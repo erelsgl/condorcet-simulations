@@ -21,7 +21,7 @@ style="g-o"
 
 figsize=(16, 12)  # (length, height)
 map_index_to_subplot_index = [1, 2, 3, 5, 6, 7, 9, 10, 11]
-dpi=80
+dpi=300
 facecolor='w'
 edgecolor='k'
 
@@ -65,10 +65,10 @@ map_column_codes_to_column_names = {
     }
 
 map_column_codes_to_short_names = {
-        "optimal_is_strong_democracy": "sd",
+        "optimal_is_strong_democracy": "d",
         "optimal_is_weak_democracy": "wd",
         "optimal_is_weak_epistocracy": "we",
-        "optimal_is_strong_epistocracy": "se",
+        "optimal_is_strong_epistocracy": "e",
     }
 
 map_column_codes_to_colors = {
@@ -226,7 +226,7 @@ def pie_by_means_and_stds(results_csv_file:str, figure_file:str,
     results_for_voters = results[results["voters"].isin(num_of_voterss)]
     rows = len(expertise_means)
     cols = len(expertise_stds)+1
-    plt.suptitle(f"Rules by expertise mean (m) and standard deviation (s), n={num_of_voterss}")
+    # plt.suptitle(f"Rules by expertise mean (m) and standard deviation (s), n={num_of_voterss}")
     for row_index, expertise_mean in enumerate(expertise_means):
         results_for_mean = results_for_voters.loc[results_for_voters['mean']==expertise_mean]
         for col_index, expertise_std in enumerate(expertise_stds):
@@ -277,8 +277,8 @@ expertise_stds = [0.02, 0.03, 0.04,
 # create_group_results(f"results/1000iters-norm.csv", mean_1=0.67, mean_2=0.82, std_1=0.05, std_2=0.1)
 # create_group_results(f"results/1000iters-beta.csv", mean_1=0.67, mean_2=0.82, std_1=0.05, std_2=0.1)
 
-# distribution="beta"
-distribution="norm"
+distribution="beta"
+# distribution="norm"
 results_file = f"results/1000iters-{distribution}.csv"
 
 for num_of_voters in num_of_voterss:
