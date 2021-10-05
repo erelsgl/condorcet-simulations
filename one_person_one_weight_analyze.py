@@ -278,8 +278,8 @@ expertise_stds = [0.02, 0.03, 0.04,
 # create_group_results(f"results/1000iters-norm.csv", mean_1=0.67, mean_2=0.82, std_1=0.05, std_2=0.1)
 # create_group_results(f"results/1000iters-beta.csv", mean_1=0.67, mean_2=0.82, std_1=0.05, std_2=0.1)
 
-distribution="beta"
-# distribution="norm"
+# distribution="beta"
+distribution="norm"
 results_file = f"results/1000iters-{distribution}.csv"
 
 for num_of_voters in num_of_voterss:
