@@ -66,8 +66,8 @@ map_column_codes_to_column_names = {
 
 map_column_codes_to_short_names = {
         "optimal_is_strong_democracy": "d",
-        "optimal_is_weak_democracy": "wd",
-        "optimal_is_weak_epistocracy": "we",
+        "optimal_is_weak_democracy": "sd",
+        "optimal_is_weak_epistocracy": "se",
         "optimal_is_strong_epistocracy": "e",
     }
 
@@ -227,6 +227,7 @@ def pie_by_means_and_stds(results_csv_file:str, figure_file:str,
     rows = len(expertise_means)
     cols = len(expertise_stds)+1
     # plt.suptitle(f"Rules by expertise mean (m) and standard deviation (s), n={num_of_voterss}")
+    plt.suptitle(f"{num_of_voterss[0]} voters")
     for row_index, expertise_mean in enumerate(expertise_means):
         results_for_mean = results_for_voters.loc[results_for_voters['mean']==expertise_mean]
         for col_index, expertise_std in enumerate(expertise_stds):
@@ -282,37 +283,9 @@ distribution="beta"
 results_file = f"results/1000iters-{distribution}.csv"
 
 for num_of_voters in num_of_voterss:
+    print(f"{num_of_voters} voters", flush=True)
     pie_by_means_and_stds(results_file, f"results/optimality_by_means_and_stds_{num_of_voters}-{distribution}.png",
         num_of_voterss=[num_of_voters], 
         expertise_means=expertise_means,#[.55,.65,.75,.85,.95],
         expertise_stds=expertise_stds,#[0.02, 0.04, 0.08, 0.14]
         )
-
-# plot_vs_mean_on_one_page(results_file, f"results/optimality_vs_mean-{distribution}.png",
-#     map_column_codes_to_column_names,  num_of_voterss, expertise_means, expertise_stds, line_at_half=False)
-
-# plot_vs_voters_on_one_page(results_file, f"results/optimality_vs_voters-{distribution}.png",
-#     map_column_codes_to_column_names,  num_of_voterss, expertise_means, expertise_stds, line_at_half=True)
-
-# plot_vs_voters(results_file, "optimal_agrees_majority", [3, 5, 7, 9, 11, 21, 31, 41, 51], expertise_means, expertise_stds, line_at_half=False)
-
-
-exit(0)
-
-
-plot_vs_mean_on_one_page(results_file, "results/correctness_vs_mean_1.png",
-     ["optimal_correct_minus_majority_correct"],
-     ["Optimal minus SMR"],
-     [3,5,7,9,11,21], expertise_means, expertise_stds, line_at_half=False)
-
-plot_vs_voters_on_one_page(results_file, "results/correctness_vs_voters.png",
-     ["majority_correct", "optimal_correct"],
-     ["SMR correct", "Optimal correct"],
-     num_of_voterss, [0.5, 0.6, 0.7, 0.8, 0.9, 0.95], expertise_stds, line_at_half=True)
-
-plot_vs_voters_on_one_page(results_file, "results/correctness_vs_voters_1.png",
-     ["optimal_correct_minus_majority_correct", "d_majority_correct_d_voters"],
-     ["Optimal minus SMR", "SMR derivative"],
-     num_of_voterss, [0.5, 0.6, 0.7, 0.8, 0.9, 0.95], expertise_stds, line_at_half=False)
-
-plt.close()
