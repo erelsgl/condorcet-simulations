@@ -1,9 +1,7 @@
 """ 
 A main program for running the experiments in the paper:
 
-"One person, one weight: when is weighted voting democratic?" (SCWE, 2022)
-
-See experiment.py for details.
+    "One person, one weight: when is weighted voting democratic?" (SCWE, 2022)
 
 Since:  2020-06
 Author: Erel Segal-Halevi

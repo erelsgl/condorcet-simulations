@@ -1,15 +1,16 @@
 #!python3
 
 """
-A main program for a simulation experiment for the "one person, one weight" paper.
-See experiment.py for details.
+A main program for analyzing the experiment results in the paper:
+
+    "One person, one weight: when is weighted voting democratic?" (SCWE, 2022)
 
 Since:  2020-06
 Author: Erel Segal-Halevi
 """
 
-from experiment import *
-import numpy as np
+# from experiment import *
+import pandas, numpy as np, os
 import matplotlib.pyplot as plt
 
 
