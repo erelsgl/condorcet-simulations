@@ -183,16 +183,16 @@ expertise_stds = [0.02, 0.03, 0.04,
 # create_group_results(results_file)
 # add_difference_column(results_file)
 
-# add_difference_columns(results_file)
-# add_discrete_derivative_columns(results_file)
-# add_ratio_columns(results_file.replace(".csv", "-mean-correct.csv"))
+add_difference_columns(results_file)
+add_discrete_derivative_columns(results_file)
+add_ratio_columns(results_file.replace(".csv", "-mean-correct.csv"))
 
 
 
-plot_vs_mean_on_one_page(results_file, "results/optimality_vs_mean.png",
-    ["simple_majority_optimal", "non_tyrannic_minority_decisiveness_optimal", "minority_tyranny_optimal"],
-    ["simple majority", "weak democracy", "minority tyranny"],
-    [3,5,7,9,11,21], expertise_means, expertise_stds, line_at_half=True)
+# plot_vs_mean_on_one_page(results_file, "results/optimality_vs_mean.png",
+#     ["simple_majority_optimal", "non_tyrannic_minority_decisiveness_optimal", "minority_tyranny_optimal"],
+#     ["simple majority", "weak democracy", "minority tyranny"],
+#     [3,5,7,9,11,21], expertise_means, expertise_stds, line_at_half=True)
 
 # for column in REPORTED_COLUMNS:
 #     plot_vs_mean(results_file, column, num_of_voterss[:-1], expertise_means, expertise_stds, line_at_half=False)
