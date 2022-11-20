@@ -13,14 +13,15 @@ from Committee import Committee
 
 num_of_iterations = 1000
 
-distribution="beta"
-random_expertise_levels=beta_expertise_levels
+# distribution="beta"
+# random_expertise_levels=beta_expertise_levels
 
-# distribution="norm"
-# random_expertise_levels=truncnorm_expertise_levels
+distribution="norm"
+random_expertise_levels=truncnorm_expertise_levels
 
 
-def create_results_revision(voters:int, mean:float, std:float, num_of_decisions:int=1, debug_committees=False):
+def create_results_revision(voters:int, mean:float, std:float, 
+    num_of_decisions:int=1, debug_committees=False, num_of_iterations=num_of_iterations):
     """
     Run an experiment with voters of different expertise level.
 
@@ -73,12 +74,12 @@ def create_results_revision(voters:int, mean:float, std:float, num_of_decisions:
 
     return {
         "iterations": num_of_iterations,
-        "optimal_is_strong_democracy": optimal_strong_democracy_sum / iterations,
-        "optimal_is_weak_democracy":  optimal_weak_democracy_sum / iterations,
-        "optimal_is_weak_epistocracy":  optimal_weak_epistocracy_sum / iterations,
-        "optimal_is_strong_epistocracy":  optimal_strong_epistocracy_sum / iterations,
-        "optimal_is_expert_rule": optimal_expert_rule_sum /iterations,
-        "optimal_agrees_majority": optimal_agrees_majority_sum / iterations,
+        "optimal_is_strong_democracy": optimal_strong_democracy_sum / num_of_iterations,
+        "optimal_is_weak_democracy":  optimal_weak_democracy_sum / num_of_iterations,
+        "optimal_is_weak_epistocracy":  optimal_weak_epistocracy_sum / num_of_iterations,
+        "optimal_is_strong_epistocracy":  optimal_strong_epistocracy_sum / num_of_iterations,
+        "optimal_is_expert_rule": optimal_expert_rule_sum /num_of_iterations,
+        "optimal_agrees_majority": optimal_agrees_majority_sum / num_of_iterations,
     }
 
 
@@ -87,7 +88,7 @@ def create_results_revision(voters:int, mean:float, std:float, num_of_decisions:
 if __name__ == "__main__":
     import logging, experiments_csv
 
-    experiment = experiments_csv.Experiment("results/", f"{num_of_iterations}iters-{distribution}.csv", "results/backups/")
+    experiment = experiments_csv.Experiment("one_person_one_weight__results/", f"{num_of_iterations}iters-{distribution}.csv", "one_person_one_weight__results/backups/")
     experiment.logger.setLevel(logging.INFO)
     input_ranges = {
         "voters": [3, 5, 7, 9, 11, 21, 31, 41, 51],
@@ -96,6 +97,6 @@ if __name__ == "__main__":
                 .85, .9,  0.95],
         "std": [0.02, 0.03, 0.04,
                 0.07, 0.08, 0.09,
-                0.12, 0.13, 0.14],
+                0.12, 0.13, 0.14, 0.15],
     }
     experiment.run(create_results_revision, input_ranges)
