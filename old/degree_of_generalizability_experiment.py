@@ -8,7 +8,7 @@ Since:  2020-06
 Author: Erel Segal-Halevi
 """
 
-from experiment import *
+from old.experiment import *
 import matplotlib.pyplot as plt
 
 
