@@ -21,13 +21,13 @@ distribution="norm"
 
 def add_discrete_derivative_columns(results_csv_file:str):
     results = pandas.read_csv(results_csv_file).sort_values(by=['mean', 'std', 'voters'])
-    results['d_majority_correct_d_voters'] = results.groupby(['mean', 'std'])['majority_correct'].diff().fillna(0)
-    results['d_optimal_correct_d_voters'] = results.groupby(['mean', 'std'])['optimal_correct'].diff().fillna(0)
+    results['d_majority_correct_d_voters'] = results.groupby(['mean', 'std'])['majority_correct'].diff().fillna(0)/2
+    results['d_optimal_correct_d_voters'] = results.groupby(['mean', 'std'])['optimal_correct'].diff().fillna(0)/2
     results.to_csv(results_csv_file, index=False)
 
 def add_ratio_columns(results_csv_file:str):
     results = pandas.read_csv(results_csv_file).sort_values(by=['mean', 'std', 'voters'])
-    results['ratio_difference_to_mean'] = results["majority_correct_minus_mean"] / results["optimal_correct_minus_mean"]
+    results['ratio_difference_to_mean'] = results["majority_correct_minus_true_mean"] / results["optimal_correct_minus_true_mean"]
     results['ratio_derivative_by_n']    = results["d_majority_correct_d_voters"] / results["d_optimal_correct_d_voters"]
     results['ratio_correct']            = results["majority_correct"] / results["optimal_correct"]
     results.to_csv(results_csv_file, index=False)
