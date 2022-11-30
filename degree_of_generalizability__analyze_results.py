@@ -71,19 +71,20 @@ def create_sample_results(results_csv_file:str, means:list, stds:list):
     results = results.loc[results['mean'].isin(means)]
     results = results.loc[results['std'].isin(stds)]
 
-    results\
-        .to_csv(results_csv_file.replace(".csv", "-samples.csv"), index=False)
-    #     .drop(columns=CORRECTNESS_COLUMNS)\
-    #     .drop(columns=OLD_CORRECTNESS_COLUMNS)\
-    #     .drop(columns=AGREEMENT_COLUMNS)\
-    #     .rename(columns={
-    #         "simple_majority_optimal": "smr",
-    #         "minority_decisiveness_optimal": "mino-d",
-    #         "non_tyrannic_minority_decisiveness_optimal": "n-t-m-d",
-    #         "majority_tyranny_optimal": "majo-t",
-    #         "minority_tyranny_optimal": "mino-t",
-    #         "expert_tyranny_optimal": "expert",
-    #         "minority_colluding": "min-coll"})\
+    results = results.round(3)
+    results['mean'] = results['mean'].map({means[0]:"Lower", means[1]:"Medium", means[2]:"Upper"})
+    results['std'] = results['std'].map({stds[0]:"Lower", stds[1]:"Medium", stds[2]:"Upper"})
+
+    columns_1 = ['voters', 'mean', 'std', 'true_mean', 
+        'majority_correct', 'd_majority_correct_d_voters', 'majority_correct_minus_true_mean',
+        'optimal_correct', 'optimal_correct_minus_majority_correct',
+        ]
+    columns_2 = ['voters', 'mean', 'std', 
+        'ratio_difference_to_mean', 'ratio_derivative_by_n', 'ratio_correct'
+        ]
+
+    results[columns_1].to_csv(results_csv_file.replace(".csv", "-table-1.csv"), index=False)
+    results[columns_2].to_csv(results_csv_file.replace(".csv", "-table-2.csv"), index=False)
 
 
 
@@ -92,4 +93,4 @@ if __name__ == "__main__":
     add_discrete_derivative_columns(results_csv_file)
     add_ratio_columns(results_csv_file)
     create_group_results(results_csv_file, 0.65, 0.8, 0.04, 0.09)
-    create_sample_results(results_csv_file, means=[0.55, 0.75, 0.95], stds=[0.02, 0.08, 0.14])
+    create_sample_results(results_csv_file, means=[0.55, 0.75, 0.95], stds=[0.04, 0.08, 0.14])
