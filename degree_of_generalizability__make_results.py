@@ -30,7 +30,7 @@ distribution="norm"
 random_expertise_levels=truncnorm_expertise_levels
 
 
-def create_results(voters:int, mean:float, std:float, num_of_decisions:int=1, debug_committees=False):
+def create_results(voters:int, mean:float, std:float, num_of_decisions:int=1):
     """
     Run an experiment with voters of different expertise level.
 
@@ -39,11 +39,11 @@ def create_results(voters:int, mean:float, std:float, num_of_decisions:int=1, de
     It is a truncated-normal random variable, with mean  `expertise_mean`  and std  `expertise_std,
        truncated to be in the range [0.5 , 1].
 
-    :param results_csv_file:   where to store the results.
-    :param num_of_iterations:  how many times to run the experiment.
-    :param num_of_voters:     how many voters are there in the committee. Should be an odd integer.
-    :param expertise_mean:     what is the mean expertise-level  (should be between 0.5 and 1).
-    :param expertise_std:      what is the std of the expertise level.
+    :param voters:      the number of voters in the committee. Should be an odd integer.
+    :param mean:        the mean expertise-level  (should be between 0.5 and 1).
+    :param std:         the std of the expertise level.
+    :param num_of_decisions:  how many times to run the experiment. Default=1.
+    :param debug_committees
 
     NOTE: num_decisions is set to 1 based on the answer by Henry:
             https://stats.stackexchange.com/a/471431/10760
@@ -58,7 +58,7 @@ def create_results(voters:int, mean:float, std:float, num_of_decisions:int=1, de
 
     for _ in range(num_of_iterations):
         committee = Committee(random_expertise_levels(mean, std, voters))
-        if (debug_committees): print(committee)
+        logger.debug("Committee: %s", committee)
         for _ in range(num_of_decisions):
             vote = committee.vote()
             optimal_vote  = committee.optimal_weighted_rule(vote)
@@ -66,7 +66,7 @@ def create_results(voters:int, mean:float, std:float, num_of_decisions:int=1, de
             optimal_correct_sum  += optimal_vote/num_of_decisions
             majority_correct_sum += majority_vote/num_of_decisions
 
-    return { 
+    return {
         "iterations": num_of_iterations,
         "voters": voters,
         "mean": mean,
@@ -87,6 +87,7 @@ def create_results(voters:int, mean:float, std:float, num_of_decisions:int=1, de
 
 if __name__ == "__main__":
     import logging, experiments_csv
+    # logger.setLevel(logging.DEBUG)  # to log the committees
 
     experiment = experiments_csv.Experiment("degree_of_generalizability__results/", f"{num_of_iterations}iters-{distribution}.csv", "degree_of_generalizability__results/backups/")
     experiment.logger.setLevel(logging.INFO)
