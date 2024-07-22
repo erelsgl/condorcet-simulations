@@ -3,6 +3,11 @@ A main program for running the experiments in the paper:
 
     "One person, one weight: when is weighted voting democratic?" (Social Choice and Welfare, 2022)
     https://link.springer.com/article/10.1007/s00355-022-01393-8
+    by Roi Baharad, Shmuel Nitzan and Erel Segal-Halevi
+
+There are voters with different expertise level,
+and it is required to decide whether the majority is correct,
+or - alternatively - whether it is good to give the minority a decisive power.
 
 Since:  2020-06
 Author: Erel Segal-Halevi

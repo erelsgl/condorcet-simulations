@@ -5,6 +5,7 @@ A main program for analyzing the experiment results in the paper:
 
     "One person, one weight: when is weighted voting democratic?" (Social Choice and Welfare, 2022)
     https://link.springer.com/article/10.1007/s00355-022-01393-8
+    by Roi Baharad, Shmuel Nitzan and Erel Segal-Halevi
 
 Since:  2020-06
 Author: Erel Segal-Halevi

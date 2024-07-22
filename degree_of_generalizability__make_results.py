@@ -1,9 +1,8 @@
 """
-A utility for performing simulation experiments on decision rules.
+A main program for running the experiments in the paper:
 
-There are voters with different expertise level,
-and it is required to decide whether the majority is correct,
-or - alternatively - whether it is good to give the minority a decisive power.
+    "On the Degree of Generalizability of Condorcet Jury Theorem"
+    by Roi Baharad, Shmuel Nitzan and Erel Segal-Halevi
 
 Since:  2020-04
 Author: Erel Segal-Halevi
