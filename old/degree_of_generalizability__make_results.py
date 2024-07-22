@@ -12,7 +12,7 @@ Credits: https://stats.stackexchange.com/q/471426/10760
 """
 
 from Committee import Committee
-from expertise_levels import truncnorm_expertise_levels, beta_expertise_levels
+from expertise_levels import truncnorm, beta
 
 import pandas, logging, sys
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ num_of_iterations = 1000
 # random_expertise_levels=beta_expertise_levels
 
 distribution="norm"
-random_expertise_levels=truncnorm_expertise_levels
+random_expertise_levels=truncnorm
 
 
 def create_results(voters:int, mean:float, std:float, num_of_decisions:int=1, debug_committees=False):
@@ -88,7 +88,7 @@ def create_results(voters:int, mean:float, std:float, num_of_decisions:int=1, de
     compromose_strongmajority_agrees_optimal_sum = 0
 
     for _ in range(num_of_iterations):
-        committee = Committee(truncnorm_expertise_levels(mean, std, voters))
+        committee = Committee(truncnorm(mean, std, voters))
         if (debug_committees): print(committee)
         minority_decisiveness_optimal += committee.is_optimal_minority_decisiveness()
         if (voters<=21):

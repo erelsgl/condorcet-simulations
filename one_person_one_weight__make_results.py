@@ -1,23 +1,24 @@
 """ 
 A main program for running the experiments in the paper:
 
-    "One person, one weight: when is weighted voting democratic?" (SCWE, 2022)
+    "One person, one weight: when is weighted voting democratic?" (Social Choice and Welfare, 2022)
+    https://link.springer.com/article/10.1007/s00355-022-01393-8
 
 Since:  2020-06
 Author: Erel Segal-Halevi
 """
 
-from expertise_levels import truncnorm_expertise_levels, beta_expertise_levels
+import expertise_levels
 from Committee import Committee
 
 
 num_of_iterations = 1000
 
 # distribution="beta"
-# random_expertise_levels=beta_expertise_levels
+# random_expertise_levels=expertise_levels.beta
 
 distribution="norm"
-random_expertise_levels=truncnorm_expertise_levels
+random_expertise_levels=expertise_levels.truncnorm
 
 
 def create_results_revision(voters:int, mean:float, std:float, 

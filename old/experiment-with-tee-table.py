@@ -19,7 +19,7 @@ from collections import OrderedDict
 import pandas, os.path
 
 from Committee import Committee
-from expertise_levels import truncnorm_expertise_levels, beta_expertise_levels
+from expertise_levels import truncnorm, beta
 
 import logging, sys
 logger = logging.getLogger(__name__)
@@ -93,7 +93,7 @@ def create_results(results_csv_file:str, num_of_iterations:int, num_of_voterss:l
                 compromose_strongmajority_agrees_optimal_sum = 0
 
                 for _ in range(num_of_iterations):
-                    committee = Committee(truncnorm_expertise_levels(expertise_mean, expertise_std, num_of_voters))
+                    committee = Committee(truncnorm(expertise_mean, expertise_std, num_of_voters))
                     if (debug_committees): print(committee)
                     minority_decisiveness_optimal += committee.is_optimal_minority_decisiveness()
                     if (num_of_voters<=21):

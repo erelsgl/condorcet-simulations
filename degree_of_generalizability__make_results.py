@@ -12,22 +12,19 @@ Credits: https://stats.stackexchange.com/q/471426/10760
 """
 
 from Committee import Committee
-from expertise_levels import truncnorm_expertise_levels, beta_expertise_levels, truncnorm_true_mean
+import expertise_levels
 
-import pandas, logging, sys
+import logging, sys
 logger = logging.getLogger(__name__)
-
-logger.addHandler(logging.StreamHandler(sys.stdout))
-logger.setLevel(logging.INFO)
 
 
 num_of_iterations = 1000
 
 # distribution="beta"
-# random_expertise_levels=beta_expertise_levels
+# random_expertise_levels=expertise_levels.beta
 
 distribution="norm"
-random_expertise_levels=truncnorm_expertise_levels
+random_expertise_levels=expertise_levels.truncnorm
 
 
 def create_results(voters:int, mean:float, std:float, num_of_decisions:int=1):
@@ -52,7 +49,7 @@ def create_results(voters:int, mean:float, std:float, num_of_decisions:int=1):
     majority_correct_sum = 0
     
     if distribution=="norm":
-        true_mean = truncnorm_true_mean(mean,std)
+        true_mean = expertise_levels.truncnorm_true_mean(mean,std)
     else:
         true_mean = mean
 
@@ -87,9 +84,14 @@ def create_results(voters:int, mean:float, std:float, num_of_decisions:int=1):
 
 if __name__ == "__main__":
     import logging, experiments_csv
+
+    logger.addHandler(logging.StreamHandler(sys.stdout))
+    logger.setLevel(logging.INFO)
     # logger.setLevel(logging.DEBUG)  # to log the committees
 
-    experiment = experiments_csv.Experiment("degree_of_generalizability__results/", f"{num_of_iterations}iters-{distribution}.csv", "degree_of_generalizability__results/backups/")
+    experiment = experiments_csv.Experiment("degree_of_generalizability__results/", 
+        f"{num_of_iterations}iters.csv", 
+        "degree_of_generalizability__results/backups/")
     experiment.logger.setLevel(logging.INFO)
     input_ranges = {
         "voters": [3, 5, 7, 9, 11, 21, 31, 41, 51],
@@ -99,5 +101,6 @@ if __name__ == "__main__":
         "std": [0.02, 0.03, 0.04,
                 0.07, 0.08, 0.09,
                 0.12, 0.13, 0.14],
+        "distribution": [expertise_levels.truncnorm],
     }
     experiment.run(create_results, input_ranges)

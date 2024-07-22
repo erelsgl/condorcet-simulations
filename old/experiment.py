@@ -18,7 +18,7 @@ from collections import OrderedDict
 import pandas, os.path
 
 from Committee import Committee
-from expertise_levels import truncnorm_expertise_levels, beta_expertise_levels
+from expertise_levels import truncnorm, beta
 
 import logging, sys
 logger = logging.getLogger(__name__)

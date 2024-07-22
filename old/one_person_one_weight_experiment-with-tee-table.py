@@ -23,7 +23,7 @@ TABLE_COLUMNS = INDEX_COLUMNS + REPORTED_COLUMNS
 
 
 def create_results_revision(results_csv_file:str, num_of_iterations:int, num_of_voterss:list, expertise_means:list, expertise_stds:list, num_of_decisions:int=1, debug_committees=False,
-    random_expertise_levels=beta_expertise_levels):
+    random_expertise_levels=beta):
     """
     Run an experiment with voters of different expertise level.
 
@@ -104,7 +104,7 @@ def create_results_revision(results_csv_file:str, num_of_iterations:int, num_of_
 num_of_iterations = 1000
 
 distribution="beta"
-random_expertise_levels=beta_expertise_levels
+random_expertise_levels=beta
 
 # distribution="norm"
 # random_expertise_levels=truncnorm_expertise_levels
