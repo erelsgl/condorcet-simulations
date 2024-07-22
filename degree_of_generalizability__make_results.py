@@ -14,20 +14,13 @@ Credits: https://stats.stackexchange.com/q/471426/10760
 from Committee import Committee
 import expertise_levels
 
-import logging, sys
+import logging, sys, numpy as np
 logger = logging.getLogger(__name__)
 
 
 num_of_iterations = 1000
 
-# distribution="beta"
-# random_expertise_levels=expertise_levels.beta
-
-distribution="norm"
-random_expertise_levels=expertise_levels.truncnorm
-
-
-def create_results(voters:int, mean:float, std:float, num_of_decisions:int=1):
+def create_results(voters:int, mean:float, std:float, distribution:callable, num_of_decisions:int=1):
     """
     Run an experiment with voters of different expertise level.
 
@@ -48,13 +41,13 @@ def create_results(voters:int, mean:float, std:float, num_of_decisions:int=1):
     optimal_correct_sum = 0
     majority_correct_sum = 0
     
-    if distribution=="norm":
-        true_mean = expertise_levels.truncnorm_true_mean(mean,std)
+    if distribution==expertise_levels.truncnorm:
+        true_mean = expertise_levels.truncnorm.true_mean(mean,std)
     else:
         true_mean = mean
 
     for _ in range(num_of_iterations):
-        committee = Committee(random_expertise_levels(mean, std, voters))
+        committee = Committee(distribution(mean, std, voters))
         logger.debug("Committee: %s", committee)
         for _ in range(num_of_decisions):
             vote = committee.vote()
@@ -85,15 +78,20 @@ def create_results(voters:int, mean:float, std:float, num_of_decisions:int=1):
 if __name__ == "__main__":
     import logging, experiments_csv
 
+    np.seterr(all="raise")
+
     logger.addHandler(logging.StreamHandler(sys.stdout))
     logger.setLevel(logging.INFO)
     # logger.setLevel(logging.DEBUG)  # to log the committees
 
-    experiment = experiments_csv.Experiment("degree_of_generalizability__results/", 
-        f"{num_of_iterations}iters.csv", 
-        "degree_of_generalizability__results/backups/")
+    folder = "degree_of_generalizability__results/"
+    filename = f"{num_of_iterations}iters.csv"
+    backup_folder = "degree_of_generalizability__results/backups/"
+
+    experiment = experiments_csv.Experiment(folder, filename, backup_folder)
     experiment.logger.setLevel(logging.INFO)
-    input_ranges = {
+
+    input_ranges_original_submission = {
         "voters": [3, 5, 7, 9, 11, 21, 31, 41, 51],
         "mean": [.55, .6, 0.65,
                 .7, .75,  .8,
@@ -103,4 +101,21 @@ if __name__ == "__main__":
                 0.12, 0.13, 0.14],
         "distribution": [expertise_levels.truncnorm],
     }
-    experiment.run(create_results, input_ranges)
+    # experiment.run(create_results, input_ranges_original_submission)
+
+    # Experiment for revision: Uniform distribution
+    interval_starts = [0.51, 0.6, 0.7, 0.8, 0.9]
+    interval_ends   = [0.6, 0.7, 0.8, 0.9, 0.99]
+    for start in interval_starts:
+        for end in interval_ends:
+            if end>start:
+                print(f"Interval [{start}, {end}]")
+                mean = np.round((start+end)/2,2)
+                std = (end-start)/np.sqrt(12)
+                input_ranges = {
+                    "voters": [3, 5, 7, 9, 11, 21, 31, 41, 51],
+                    "distribution": [expertise_levels.uniform],
+                    "mean": [mean],
+                    "std":  [std],
+                }
+                experiment.run(create_results, input_ranges)

@@ -391,7 +391,11 @@ def logodds(expertise_level: float):
     >>> logodds(np.array([0.001, 0.999]))
     array([-6.90675478,  6.90675478])
     """
-    return np.log( expertise_level  / (1-expertise_level))
+    try:
+        return np.log( expertise_level  / (1-expertise_level))
+    except FloatingPointError as ex:
+        # print("expertise_level=",expertise_level)
+        raise FloatingPointError(f"{ex}: expertise_level={expertise_level}")
 
 
 def round3(l:list):
@@ -404,6 +408,5 @@ def round3(l:list):
 
 if __name__ == "__main__":
     import doctest
-    (failures,tests) = doctest.testmod(report=True)
-    print ("{} failures, {} tests".format(failures,tests))
+    print(doctest.testmod())
 

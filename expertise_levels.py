@@ -35,7 +35,8 @@ def truncnorm(mean:float, std:float, size:int):
     
     a = (MIN_PROBABILITY - loc) / scale     # MIN_PROBABILITY = a*scale + loc
     b = (MAX_PROBABILITY - loc) / scale     # MAX_PROBABILITY = b*scale + loc
-    return -np.sort(-stats.truncnorm.rvs(a, b, loc=loc, scale=scale, size=size))
+    values = stats.truncnorm.rvs(a, b, loc=loc, scale=scale, size=size)
+    return -np.sort(-values)
 
 
 def truncnorm_true_mean(mean:float, std:float):
@@ -57,6 +58,8 @@ def truncnorm_true_mean(mean:float, std:float):
     a = (MIN_PROBABILITY - loc) / scale     # MIN_PROBABILITY = a*scale + loc
     b = (MAX_PROBABILITY - loc) / scale     # MAX_PROBABILITY = b*scale + loc
     return stats.truncnorm.mean(a,b)*scale + loc
+
+truncnorm.true_mean = truncnorm_true_mean
 
 
 def beta(mean:float, std:float, size:int):
@@ -98,13 +101,37 @@ def beta(mean:float, std:float, size:int):
 
 
 
+def uniform(mean:float, std:float, size:int):
+    """
+    Draw "size" random expertise levels.
+    Each level is drawn from a uniform distribution in [mean-std*sqrt(3), mean+std*sqrt(3)],
+    which indeed has the given mean and std.
+    :return: an array of `size` random expretise levels, sorted from high to low.
+
+    >>> a = uniform(mean=0.7, std=0.01/np.sqrt(3), size=100)
+    >>> np.round(sum(a)/len(a),1)
+    0.7
+    >>> sum(a<0.69)
+    0
+    >>> sum(a>0.71)
+    0
+    """
+    # std = (2*radius)/sqrt(12) = radius/sqrt(3)
+    radius = np.round(std * np.sqrt(3), 2)
+    loc = mean-radius
+    scale = 2*radius
+    # print(f"loc={loc}, scale={scale}")
+    values = stats.uniform.rvs(loc=loc, scale=scale, size=size)
+    return -np.sort(-values)
+
 
 if __name__ == "__main__":
     import doctest
     print(doctest.testmod())
 
-    # print(truncnorm(mean=0.6, std=0.1, size=11))
-    # print(beta(mean=0.6, std=0.1, size=11))
+    print("truncnorm: ",truncnorm(mean=0.6, std=0.1, size=11))
+    print("beta     : ",beta(mean=0.6, std=0.1, size=11))
+    print("uniform  : ",uniform(mean=0.6, std=0.1/np.sqrt(3), size=11))
     # print(beta(mean=3/4, std=1/np.sqrt(48), size=11))   # equivalent to uniform (std=0.14433)
     # print(beta(mean=0.55, std=0.14, size=11))   # almost equivalent to uniform 
     # print(beta(mean=0.75, std=0.14, size=11))   # almost equivalent to uniform 
