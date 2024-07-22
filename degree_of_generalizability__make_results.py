@@ -111,7 +111,7 @@ if __name__ == "__main__":
             if end>start:
                 print(f"Interval [{start}, {end}]")
                 mean = np.round((start+end)/2,2)
-                std = (end-start)/np.sqrt(12)
+                std = np.round((end-start)/np.sqrt(12),3)
                 input_ranges = {
                     "voters": [3, 5, 7, 9, 11, 21, 31, 41, 51],
                     "distribution": [expertise_levels.uniform],
