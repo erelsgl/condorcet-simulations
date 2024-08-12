@@ -123,7 +123,7 @@ if __name__ == "__main__":
     input_ranges = {
         "voters": [3, 5, 7, 9, 11, 21, 31, 41, 51],
         "distribution": [expertise_levels.beta],
-        "mean": [9/14],
+        "mean": [8/14, 9/14, 10/14],
         "std":  [1.1/14],
     }
     experiment.run(create_results, input_ranges)
