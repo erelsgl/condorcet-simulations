@@ -129,11 +129,17 @@ if __name__ == "__main__":
     import doctest
     print(doctest.testmod())
 
-    print("truncnorm: ",truncnorm(mean=0.6, std=0.1, size=11))
-    print("beta     : ",beta(mean=0.6, std=0.1, size=11))
-    print("uniform  : ",uniform(mean=0.6, std=0.1/np.sqrt(3), size=11))
+    # print("truncnorm: ",truncnorm(mean=0.6, std=0.1, size=11))
+    # print("beta     : ",beta(mean=0.6, std=0.1, size=11))
+    # print("uniform  : ",uniform(mean=0.6, std=0.1/np.sqrt(3), size=11))
+
     # print(beta(mean=3/4, std=1/np.sqrt(48), size=11))   # equivalent to uniform (std=0.14433)
     # print(beta(mean=0.55, std=0.14, size=11))   # almost equivalent to uniform 
     # print(beta(mean=0.75, std=0.14, size=11))   # almost equivalent to uniform 
     # print(beta(mean=0.95, std=0.14, size=11))   
     # print(truncnorm(mean=0.6, std=0, size=11))   # Division by zero error
+
+    import matplotlib.pyplot as plt
+    plt.hist(beta(9/14, 1.1/14, 10000), 100)    # ~ alpha=5, beta=2
+    plt.show()
+

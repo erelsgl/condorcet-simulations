@@ -39,7 +39,7 @@ def create_results(voters:int, mean:float, std:float, distribution:callable, num
     """
     optimal_correct_sum = 0
     majority_correct_sum = 0
-    
+
     if distribution==expertise_levels.truncnorm:
         true_mean = expertise_levels.truncnorm.true_mean(mean,std)
     else:
@@ -117,4 +117,13 @@ if __name__ == "__main__":
                     "mean": [mean],
                     "std":  [std],
                 }
-                experiment.run(create_results, input_ranges)
+                # experiment.run(create_results, input_ranges)
+
+    # Experiment for revision: Beta distribution
+    input_ranges = {
+        "voters": [3, 5, 7, 9, 11, 21, 31, 41, 51],
+        "distribution": [expertise_levels.beta],
+        "mean": [9/14],
+        "std":  [1.1/14],
+    }
+    experiment.run(create_results, input_ranges)
