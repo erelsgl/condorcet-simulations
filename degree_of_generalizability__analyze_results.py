@@ -119,15 +119,26 @@ if __name__ == "__main__":
     logger.setLevel(logging.INFO)
 
     # Code for experiment in the original submission
-    results_csv_file = "degree_of_generalizability__results/" + f"{num_of_iterations}iters-norm.csv"
-    add_discrete_derivative_columns(results_csv_file)
-    add_ratio_columns(results_csv_file)
-    create_group_results(results_csv_file, 0.65, 0.8, 0.04, 0.09)
-    create_sample_results(results_csv_file, means=[0.55, 0.75, 0.95], stds=[0.04, 0.08, 0.14])
+    # results_csv_file = "degree_of_generalizability__results/" + f"{num_of_iterations}iters-norm.csv"
+    # add_discrete_derivative_columns(results_csv_file)
+    # add_ratio_columns(results_csv_file)
+    # create_group_results(results_csv_file, 0.65, 0.8, 0.04, 0.09)
+    # create_sample_results(results_csv_file, means=[0.55, 0.75, 0.95], stds=[0.04, 0.08, 0.14])
 
-    # Code for experiment in the original submission
-    results_csv_file = "degree_of_generalizability__results/" + f"{num_of_iterations}iters.csv"
+    # results_csv_file = "degree_of_generalizability__results/" + f"{num_of_iterations}iters.csv"
+    # add_discrete_derivative_columns(results_csv_file)
+    # add_ratio_columns(results_csv_file)
+    # add_uniform_distribution_column(results_csv_file)
+    # round_columns(results_csv_file)
+
+    # Code for experiment in the new submission
+    results_csv_file = "degree_of_generalizability__results/" + f"{num_of_iterations}iters-beta.csv"
     add_discrete_derivative_columns(results_csv_file)
     add_ratio_columns(results_csv_file)
-    add_uniform_distribution_column(results_csv_file)
+    round_columns(results_csv_file)
+
+    # Code for experiment in the new submission
+    results_csv_file = "degree_of_generalizability__results/" + f"{num_of_iterations}iters-uniform.csv"
+    add_discrete_derivative_columns(results_csv_file)
+    add_ratio_columns(results_csv_file)
     round_columns(results_csv_file)
