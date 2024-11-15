@@ -29,6 +29,12 @@ logger = logging.getLogger(__name__)
 num_of_iterations = 1000
 
 
+# def add_uniform_distribution_name_column(results_csv_file:str):
+#     results = pandas.read_csv(results_csv_file)
+#     results['distribution_name'] = results["majority_correct_minus_true_mean"] / results["optimal_correct_minus_true_mean"], 3)
+#     results.to_csv(results_csv_file, index=False)
+
+
 def add_discrete_derivative_columns(results_csv_file:str):
     results = pandas.read_csv(results_csv_file).sort_values(by=['distribution', 'mean', 'std', 'voters'])
     results['d_majority_correct_d_voters'] = np.round(results.groupby(['distribution', 'mean', 'std'])['majority_correct'].diff().fillna(0)/2, 3)
@@ -59,6 +65,12 @@ def round_columns(results_csv_file:str):
     results.to_csv(results_csv_file, index=False)
 
 def create_group_results(results_csv_file:str, mean_1:float, mean_2:float, std_1:float, std_2:float):
+    """
+    Groups the results into lower/medium/upper mean and std, by averaging the results in each group.
+
+    The three mean groups are: [0, mean_1]; [mean_1, mean_2];  [mean_2, inf]
+    The three std groups  are: [0, std_1]; [std_1, std_2];  [std_2, inf]
+    """
     results = pandas.read_csv(results_csv_file)
 
     # Create buckets for the mean:
@@ -77,36 +89,38 @@ def create_group_results(results_csv_file:str, mean_1:float, mean_2:float, std_1
 
     results_mean\
         .to_csv(results_csv_file.replace(".csv", "-groups.csv"), index=True)
-    #     .drop(columns=CORRECTNESS_COLUMNS)\
-    #     .drop(columns=OLD_CORRECTNESS_COLUMNS)\
-    #     .drop(columns=AGREEMENT_COLUMNS)\
-    #     .rename(columns={
-    #         "simple_majority_optimal": "smr",
-    #         "minority_decisiveness_optimal": "mino-d",
-    #         "non_tyrannic_minority_decisiveness_optimal": "n-t-m-d",
-    #         "majority_tyranny_optimal": "majo-t",
-    #         "minority_tyranny_optimal": "mino-t",
-    #         "expert_tyranny_optimal": "expert",
-    #         "minority_colluding": "min-coll"})\
 
 
 def create_sample_results(results_csv_file:str, means:list, stds:list):
+    """
+    Groups the results into lower/medium/upper mean and std, by taking a single sample from each group.
+
+    The three mean samples are in the `means` list.
+    The three std samples are in the `stds` list.
+    """
     results = pandas.read_csv(results_csv_file)
 
-    # Create buckets for the mean:
     results = results.loc[results['mean'].isin(means)]
     results = results.loc[results['std'].isin(stds)]
 
     results = results.round(3)
     results['mean'] = results['mean'].map({means[0]:"Lower", means[1]:"Medium", means[2]:"Upper"})
     results['std'] = results['std'].map({stds[0]:"Lower", stds[1]:"Medium", stds[2]:"Upper"})
+    
+    results\
+        .to_csv(results_csv_file.replace(".csv", "-sample.csv"), index=True)
+
+
+
+def create_table1_table2(results_csv_file:str):
+    results = pandas.read_csv(results_csv_file)
 
     columns_1 = ['voters', 'mean', 'std', 'true_mean', 
         'majority_correct', 'd_majority_correct_d_voters', 'majority_correct_minus_true_mean',
         'optimal_correct', 'optimal_correct_minus_majority_correct',
         ]
     columns_2 = ['voters', 'mean', 'std', 
-        'ratio_difference_to_mean', 'ratio_derivative_by_n', 'ratio_correct'
+        'ratio_difference_to_mean', 'ratio_correct'
         ]
 
     results[columns_1].to_csv(results_csv_file.replace(".csv", "-table-1.csv"), index=False)
@@ -118,27 +132,16 @@ if __name__ == "__main__":
     logger.addHandler(logging.StreamHandler(sys.stdout))
     logger.setLevel(logging.INFO)
 
-    # Code for experiment in the original submission
-    # results_csv_file = "degree_of_generalizability__results/" + f"{num_of_iterations}iters-norm.csv"
-    # add_discrete_derivative_columns(results_csv_file)
-    # add_ratio_columns(results_csv_file)
-    # create_group_results(results_csv_file, 0.65, 0.8, 0.04, 0.09)
-    # create_sample_results(results_csv_file, means=[0.55, 0.75, 0.95], stds=[0.04, 0.08, 0.14])
+    for distribution in ["norm", "beta", "uniform"]:
+        results_csv_file = f"degree_of_generalizability__results/{num_of_iterations}iters-{distribution}.csv"
+        print(f"\nFILE: {results_csv_file}")
+        add_discrete_derivative_columns(results_csv_file)
+        add_ratio_columns(results_csv_file)
+        round_columns(results_csv_file)
+        create_table1_table2(results_csv_file)
 
-    # results_csv_file = "degree_of_generalizability__results/" + f"{num_of_iterations}iters.csv"
-    # add_discrete_derivative_columns(results_csv_file)
-    # add_ratio_columns(results_csv_file)
-    # add_uniform_distribution_column(results_csv_file)
-    # round_columns(results_csv_file)
-
-    # Code for experiment in the new submission
-    results_csv_file = "degree_of_generalizability__results/" + f"{num_of_iterations}iters-beta.csv"
-    add_discrete_derivative_columns(results_csv_file)
-    add_ratio_columns(results_csv_file)
-    round_columns(results_csv_file)
-
-    # Code for experiment in the new submission
-    results_csv_file = "degree_of_generalizability__results/" + f"{num_of_iterations}iters-uniform.csv"
-    add_discrete_derivative_columns(results_csv_file)
-    add_ratio_columns(results_csv_file)
-    round_columns(results_csv_file)
+    # Code used to create the shortened tables in the paper (for normal distribution only):
+    results_csv_file = f"degree_of_generalizability__results/{num_of_iterations}iters-norm.csv"
+    create_group_results(results_csv_file, mean_1=0.65, mean_2=0.8, std_1=0.04, std_2=0.09)
+    create_sample_results(results_csv_file, means=[0.55, 0.75, 0.95], stds=[0.04, 0.08, 0.14])
+    create_table1_table2(results_csv_file.replace(".csv", "-sample.csv"))

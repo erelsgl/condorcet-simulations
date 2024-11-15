@@ -90,7 +90,7 @@ def beta(mean:float, std:float, size:int):
     a = (mean1**2) * ( (1-mean1)/(std1**2) - (1/mean1) )
     b = a*(1/mean1 - 1)
 
-    # print(f"a={a} b={b}")
+    print(f"14a={a} b={b}")
 
     try:
         values = stats.beta.rvs(a, b, loc=loc, scale=scale, size=size)
@@ -127,7 +127,7 @@ def uniform(mean:float, std:float, size:int):
 
 if __name__ == "__main__":
     import doctest
-    print(doctest.testmod())
+    # print(doctest.testmod())
 
     # print("truncnorm: ",truncnorm(mean=0.6, std=0.1, size=11))
     # print("beta     : ",beta(mean=0.6, std=0.1, size=11))
@@ -140,6 +140,7 @@ if __name__ == "__main__":
     # print(truncnorm(mean=0.6, std=0, size=11))   # Division by zero error
 
     import matplotlib.pyplot as plt
-    plt.hist(beta(9/14, 1.1/14, 10000), 100)    # ~ alpha=5, beta=2
-    plt.show()
+    # plt.hist(beta(8/14, 1.1/14, 10000), 100)    # ~ alpha=5, beta=2
+    # plt.show()
+    print(beta(10/14, 1.1/14, 1))
 
