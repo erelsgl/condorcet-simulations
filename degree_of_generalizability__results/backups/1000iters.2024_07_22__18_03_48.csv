@@ -1,3 +1,0 @@
-voters,distribution,mean,std,iterations,true_mean,optimal_correct,optimal_correct_minus_mean,optimal_correct_minus_true_mean,majority_correct,majority_correct_minus_mean,majority_correct_minus_true_mean,optimal_correct_minus_majority_correct
-3,uniform,0.65,0.0288675134594812,1000,0.65,0.696,0.0459999999999999,0.0459999999999999,0.696,0.0459999999999999,0.0459999999999999,0.0
-3,uniform,0.65,0.028867513459481284,1000,0.65,0.752,0.10199999999999998,0.10199999999999998,0.752,0.10199999999999998,0.10199999999999998,0.0

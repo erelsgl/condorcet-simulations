@@ -72,10 +72,14 @@ def create_results(voters:int, mean:float, std:float, distribution:callable, num
     }
 
 
-def run_experiment_truncnorm():
+def run_experiment_truncnorm(folder, backup_folder):
     """
     The experiment from the original submission
     """
+    filename = f"{num_of_iterations}iters-norm.csv"
+    experiment = experiments_csv.Experiment(folder, filename, backup_folder)
+    experiment.logger.setLevel(logging.INFO)
+
     input_ranges_original_submission = {
         "voters": [3, 5, 7, 9, 11, 21, 31, 41, 51],
         "mean": [.55, .6, 0.65,
@@ -88,10 +92,14 @@ def run_experiment_truncnorm():
     }
     experiment.run(create_results, input_ranges_original_submission)
 
-def run_experiment_uniform():
+def run_experiment_uniform(folder, backup_folder):
     """
     An experiment for the first revision: Uniform distribution
     """
+    filename = f"{num_of_iterations}iters-uniform.csv"
+    experiment = experiments_csv.Experiment(folder, filename, backup_folder)
+    experiment.logger.setLevel(logging.INFO)
+
     interval_starts = [0.51, 0.6, 0.7, 0.8, 0.9]
     interval_ends   = [0.6, 0.7, 0.8, 0.9, 0.99]
     for start in interval_starts:
@@ -108,10 +116,14 @@ def run_experiment_uniform():
                 }
                 experiment.run(create_results, input_ranges)
     
-def run_experiment_beta():
+def run_experiment_beta(folder, backup_folder):
     """
     Experiment for first revision: Beta distribution
     """
+    filename = f"{num_of_iterations}iters-beta.csv"
+    experiment = experiments_csv.Experiment(folder, filename, backup_folder)
+    experiment.logger.setLevel(logging.INFO)
+
     input_ranges = {
         "voters": [3, 5, 7, 9, 11, 21, 31, 41, 51],
         "distribution": [expertise_levels.beta],
@@ -129,15 +141,11 @@ if __name__ == "__main__":
 
     logger.addHandler(logging.StreamHandler(sys.stdout))
     logger.setLevel(logging.INFO)
-    # logger.setLevel(logging.DEBUG)  # to log the committees
+    # logger.setLevel(logging.DEBUG)  # to log the committeesx
 
     folder = "degree_of_generalizability__results/"
-    filename = f"{num_of_iterations}iters.csv"
-    backup_folder = "degree_of_generalizability__results/backups/"
+    backup_folder = f"{folder}backups/"
 
-    experiment = experiments_csv.Experiment(folder, filename, backup_folder)
-    experiment.logger.setLevel(logging.INFO)
-
-    run_experiment_truncnorm()
-    # run_experiment_uniform()
-    # run_experiment_beta()
+    run_experiment_truncnorm(folder, backup_folder)
+    # run_experiment_uniform(folder, backup_folder)
+    # run_experiment_beta(folder, backup_folder)
