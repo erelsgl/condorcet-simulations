@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
     # Experiment for revision: Uniform distribution
     interval_starts = [0.51, 0.6, 0.7, 0.8, 0.9]
-    interval_ends   =       
+    interval_ends   = [0.6, 0.7, 0.8, 0.9, 0.99]
     for start in interval_starts:
         for end in interval_ends:
             if end>start:
