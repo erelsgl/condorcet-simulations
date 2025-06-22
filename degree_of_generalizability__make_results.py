@@ -72,6 +72,54 @@ def create_results(voters:int, mean:float, std:float, distribution:callable, num
     }
 
 
+def run_experiment_truncnorm():
+    """
+    The experiment from the original submission
+    """
+    input_ranges_original_submission = {
+        "voters": [3, 5, 7, 9, 11, 21, 31, 41, 51],
+        "mean": [.55, .6, 0.65,
+                .7, .75,  .8,
+                .85, .9,  0.95],
+        "std": [0.02, 0.03, 0.04,
+                0.07, 0.08, 0.09,
+                0.12, 0.13, 0.14],
+        "distribution": [expertise_levels.truncnorm],
+    }
+    experiment.run(create_results, input_ranges_original_submission)
+
+def run_experiment_uniform():
+    """
+    An experiment for the first revision: Uniform distribution
+    """
+    interval_starts = [0.51, 0.6, 0.7, 0.8, 0.9]
+    interval_ends   = [0.6, 0.7, 0.8, 0.9, 0.99]
+    for start in interval_starts:
+        for end in interval_ends:
+            if end>start:
+                print(f"Interval [{start}, {end}]")
+                mean = np.round((start+end)/2,2)
+                std = np.round((end-start)/np.sqrt(12),3)
+                input_ranges = {
+                    "voters": [3, 5, 7, 9, 11, 21, 31, 41, 51],
+                    "distribution": [expertise_levels.uniform],
+                    "mean": [mean],
+                    "std":  [std],
+                }
+                experiment.run(create_results, input_ranges)
+    
+def run_experiment_beta():
+    """
+    Experiment for first revision: Beta distribution
+    """
+    input_ranges = {
+        "voters": [3, 5, 7, 9, 11, 21, 31, 41, 51],
+        "distribution": [expertise_levels.beta],
+        "mean": [8/14, 9/14, 10/14],
+        "std":  [1.1/14],
+    }
+    experiment.run(create_results, input_ranges)
+
 
 
 if __name__ == "__main__":
@@ -90,40 +138,6 @@ if __name__ == "__main__":
     experiment = experiments_csv.Experiment(folder, filename, backup_folder)
     experiment.logger.setLevel(logging.INFO)
 
-    input_ranges_original_submission = {
-        "voters": [3, 5, 7, 9, 11, 21, 31, 41, 51],
-        "mean": [.55, .6, 0.65,
-                .7, .75,  .8,
-                .85, .9,  0.95],
-        "std": [0.02, 0.03, 0.04,
-                0.07, 0.08, 0.09,
-                0.12, 0.13, 0.14],
-        "distribution": [expertise_levels.truncnorm],
-    }
-    # experiment.run(create_results, input_ranges_original_submission)
-
-    # Experiment for revision: Uniform distribution
-    interval_starts = [0.51, 0.6, 0.7, 0.8, 0.9]
-    interval_ends   = [0.6, 0.7, 0.8, 0.9, 0.99]
-    for start in interval_starts:
-        for end in interval_ends:
-            if end>start:
-                print(f"Interval [{start}, {end}]")
-                mean = np.round((start+end)/2,2)
-                std = np.round((end-start)/np.sqrt(12),3)
-                input_ranges = {
-                    "voters": [3, 5, 7, 9, 11, 21, 31, 41, 51],
-                    "distribution": [expertise_levels.uniform],
-                    "mean": [mean],
-                    "std":  [std],
-                }
-                # experiment.run(create_results, input_ranges)
-
-    # Experiment for revision: Beta distribution
-    input_ranges = {
-        "voters": [3, 5, 7, 9, 11, 21, 31, 41, 51],
-        "distribution": [expertise_levels.beta],
-        "mean": [8/14, 9/14, 10/14],
-        "std":  [1.1/14],
-    }
-    experiment.run(create_results, input_ranges)
+    run_experiment_truncnorm()
+    # run_experiment_uniform()
+    # run_experiment_beta()
