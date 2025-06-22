@@ -61,6 +61,28 @@ def truncnorm_true_mean(mean:float, std:float):
 
 truncnorm.true_mean = truncnorm_true_mean
 
+def truncnorm_true_std(mean:float, std:float):
+    """
+    Compute the true standard deviation of the truncated-normal distribution with the given mean and std,
+    between MIN_PROBABILITY and MAX_PROBABILITY.
+
+    >>> np.round(truncnorm_true_std(mean=0.5, std=0.02),3)
+    0.012
+    >>> np.round(truncnorm_true_std(mean=0.5, std=0.03),3)
+    0.018
+    >>> np.round(truncnorm_true_std(mean=0.75, std=0.03),3)
+    0.03
+    >>> np.round(truncnorm_true_std(mean=1, std=0.03),3)
+    0.018
+    """
+    scale = std
+    loc = mean
+    a = (MIN_PROBABILITY - loc) / scale     # MIN_PROBABILITY = a*scale + loc
+    b = (MAX_PROBABILITY - loc) / scale     # MAX_PROBABILITY = b*scale + loc
+    return stats.truncnorm.std(a,b)*scale
+
+truncnorm.true_std = truncnorm_true_std
+
 
 def beta(mean:float, std:float, size:int):
     """
@@ -89,8 +111,6 @@ def beta(mean:float, std:float, size:int):
     std1  = std/scale           # std  = std1*scale
     a = (mean1**2) * ( (1-mean1)/(std1**2) - (1/mean1) )
     b = a*(1/mean1 - 1)
-
-    print(f"14a={a} b={b}")
 
     try:
         values = stats.beta.rvs(a, b, loc=loc, scale=scale, size=size)
@@ -126,8 +146,15 @@ def uniform(mean:float, std:float, size:int):
 
 
 if __name__ == "__main__":
-    import doctest
-    # print(doctest.testmod())
+    import doctest, numpy as np
+    np.set_printoptions(legacy="1.25")
+    print(doctest.testmod())
+
+    # print(stats.truncnorm.mean(a=-0.25, b=0.35, loc=0, scale=2))
+    # print(stats.truncnorm.std(a=-0.25, b=0.25, loc=0, scale=1))
+    # print(stats.truncnorm.std(a=-0.15, b=0.35, loc=0, scale=1))
+    # print(stats.truncnorm.std(a=-5, b=5, loc=0, scale=1))
+    
 
     # print("truncnorm: ",truncnorm(mean=0.6, std=0.1, size=11))
     # print("beta     : ",beta(mean=0.6, std=0.1, size=11))
@@ -139,8 +166,8 @@ if __name__ == "__main__":
     # print(beta(mean=0.95, std=0.14, size=11))   
     # print(truncnorm(mean=0.6, std=0, size=11))   # Division by zero error
 
-    import matplotlib.pyplot as plt
+    # import matplotlib.pyplot as plt
     # plt.hist(beta(8/14, 1.1/14, 10000), 100)    # ~ alpha=5, beta=2
     # plt.show()
-    print(beta(10/14, 1.1/14, 1))
+    # print(beta(10/14, 1.1/14, 1))
 

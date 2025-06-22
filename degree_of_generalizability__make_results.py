@@ -42,8 +42,10 @@ def create_results(voters:int, mean:float, std:float, distribution:callable, num
 
     if distribution==expertise_levels.truncnorm:
         true_mean = expertise_levels.truncnorm.true_mean(mean,std)
+        true_std =  expertise_levels.truncnorm.true_std(mean,std)
     else:
         true_mean = mean
+        true_std = std
 
     for _ in range(num_of_iterations):
         committee = Committee(distribution(mean, std, voters))
@@ -61,6 +63,7 @@ def create_results(voters:int, mean:float, std:float, distribution:callable, num
         "mean": mean,
         "std": std,
         "true_mean": true_mean,
+        "true_std": true_std,
 
         "optimal_correct": optimal_correct_sum / num_of_iterations,                      # pi*
         "optimal_correct_minus_mean": optimal_correct_sum / num_of_iterations - mean,
@@ -76,7 +79,7 @@ def run_experiment_truncnorm(folder, backup_folder):
     """
     The experiment from the original submission
     """
-    filename = f"{num_of_iterations}iters-norm.csv"
+    filename = f"{num_of_iterations}iters-truncnorm.csv"
     experiment = experiments_csv.Experiment(folder, filename, backup_folder)
     experiment.logger.setLevel(logging.INFO)
 
@@ -133,13 +136,34 @@ def run_experiment_beta(folder, backup_folder):
     experiment.run(create_results, input_ranges)
 
 
+def run_experiment_norm(folder, backup_folder):
+    """
+    The experiment from the original submission
+    """
+    filename = f"{num_of_iterations}iters-norm.csv"
+    experiment = experiments_csv.Experiment(folder, filename, backup_folder)
+    experiment.logger.setLevel(logging.INFO)
+
+    input_ranges_original_submission = {
+        "voters": [3, 5, 7, 9, 11, 21, 31, 41, 51],
+        "mean": [.55, .6, 0.65,
+                .7, .75,  .8,
+                .85, .9,  0.95],
+        "std": [0.02, 0.03, 0.04,
+                0.07, 0.08, 0.09,
+                0.12, 0.13, 0.14],
+        "distribution": [expertise_levels.norm],
+    }
+    experiment.run(create_results, input_ranges_original_submission)
+
+
 
 if __name__ == "__main__":
     import logging, experiments_csv
 
     np.seterr(all="raise")
 
-    logger.addHandler(logging.StreamHandler(sys.stdout))
+    logger.addHandler(logging.StreamHandler())
     logger.setLevel(logging.INFO)
     # logger.setLevel(logging.DEBUG)  # to log the committeesx
 
