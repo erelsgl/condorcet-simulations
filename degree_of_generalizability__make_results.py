@@ -40,11 +40,13 @@ def create_results(voters:int, mean:float, std:float, distribution:callable, num
     optimal_correct_sum = 0
     majority_correct_sum = 0
 
-    if distribution==expertise_levels.truncnorm:
-        true_mean = expertise_levels.truncnorm.true_mean(mean,std)
-        true_std =  expertise_levels.truncnorm.true_std(mean,std)
+    if hasattr(distribution, "true_mean"):
+        true_mean = distribution.true_mean(mean,std)
     else:
         true_mean = mean
+    if hasattr(distribution, "true_std"):
+        true_std = distribution.true_std(mean,std)
+    else:
         true_std = std
 
     for _ in range(num_of_iterations):
@@ -88,10 +90,13 @@ def run_experiment_truncnorm(folder, backup_folder):
         "mean": [.55, .6, 0.65,
                 .7, .75,  .8,
                 .85, .9,  0.95],
-        "std": [0.02, 0.03, 0.04,
-                0.07, 0.08, 0.09,
-                0.12, 0.13, 0.14],
-        "distribution": [expertise_levels.truncnorm],
+        "std": [0.02, 0.04,
+                0.08, 0.16, 0.32,
+                0.64, 1.28, 2.56],
+        "distribution": [
+            expertise_levels.TruncNorm(0.501,0.999),
+            expertise_levels.TruncNorm(0.001,0.999),
+            ],
     }
     experiment.run(create_results, input_ranges_original_submission)
 
@@ -136,32 +141,11 @@ def run_experiment_beta(folder, backup_folder):
     experiment.run(create_results, input_ranges)
 
 
-def run_experiment_norm(folder, backup_folder):
-    """
-    The experiment from the original submission
-    """
-    filename = f"{num_of_iterations}iters-norm.csv"
-    experiment = experiments_csv.Experiment(folder, filename, backup_folder)
-    experiment.logger.setLevel(logging.INFO)
-
-    input_ranges_original_submission = {
-        "voters": [3, 5, 7, 9, 11, 21, 31, 41, 51],
-        "mean": [.55, .6, 0.65,
-                .7, .75,  .8,
-                .85, .9,  0.95],
-        "std": [0.02, 0.03, 0.04,
-                0.07, 0.08, 0.09,
-                0.12, 0.13, 0.14],
-        "distribution": [expertise_levels.norm],
-    }
-    experiment.run(create_results, input_ranges_original_submission)
-
-
-
 if __name__ == "__main__":
     import logging, experiments_csv
 
     np.seterr(all="raise")
+    np.seterr(under='ignore')       # Ignore underflow errors
 
     logger.addHandler(logging.StreamHandler())
     logger.setLevel(logging.INFO)
@@ -170,6 +154,6 @@ if __name__ == "__main__":
     folder = "degree_of_generalizability__results/"
     backup_folder = f"{folder}backups/"
 
-    run_experiment_truncnorm(folder, backup_folder)
-    # run_experiment_uniform(folder, backup_folder)
-    # run_experiment_beta(folder, backup_folder)
+    # run_experiment_truncnorm(folder, backup_folder)
+    run_experiment_uniform(folder, backup_folder)
+    run_experiment_beta(folder, backup_folder)

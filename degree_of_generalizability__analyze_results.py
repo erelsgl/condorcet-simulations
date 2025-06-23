@@ -12,6 +12,7 @@ Credits: https://stats.stackexchange.com/q/471426/10760
 COLUMNS:
 
  * true_mean                                          == mu* 
+ * true_std                                           == sigma* 
  * majority_correct                                   == pi
  * d_majority_correct_d_voters                        == Delta_pi / Delta_n
  * majority_correct_minus_true_mean                   == pi - mu* 
@@ -115,7 +116,7 @@ def create_sample_results(results_csv_file:str, means:list, stds:list):
 def create_table1_table2(results_csv_file:str):
     results = pandas.read_csv(results_csv_file)
 
-    columns_1 = ['voters', 'mean', 'std', 'true_mean', 
+    columns_1 = ['voters', 'mean', 'std', 'true_mean', 'true_std',
         'majority_correct', 'd_majority_correct_d_voters', 'majority_correct_minus_true_mean',
         'optimal_correct', 'optimal_correct_minus_majority_correct',
         ]
@@ -132,7 +133,7 @@ if __name__ == "__main__":
     logger.addHandler(logging.StreamHandler(sys.stdout))
     logger.setLevel(logging.INFO)
 
-    for distribution in ["norm", "beta", "uniform"]:
+    for distribution in ["truncnorm", "beta", "uniform"]:
         results_csv_file = f"degree_of_generalizability__results/{num_of_iterations}iters-{distribution}.csv"
         print(f"\nFILE: {results_csv_file}")
         add_discrete_derivative_columns(results_csv_file)
@@ -140,8 +141,8 @@ if __name__ == "__main__":
         round_columns(results_csv_file)
         create_table1_table2(results_csv_file)
 
-    # Code used to create the shortened tables in the paper (for normal distribution only):
-    results_csv_file = f"degree_of_generalizability__results/{num_of_iterations}iters-norm.csv"
-    create_group_results(results_csv_file, mean_1=0.65, mean_2=0.8, std_1=0.04, std_2=0.09)
-    create_sample_results(results_csv_file, means=[0.55, 0.75, 0.95], stds=[0.04, 0.08, 0.14])
+    # Code used to create the shortened tables in the paper (for truncated-normal distribution only):
+    results_csv_file = f"degree_of_generalizability__results/{num_of_iterations}iters-truncnorm.csv"
+    create_group_results(results_csv_file, mean_1=0.65, mean_2=0.8, std_1=0.04, std_2=0.32)
+    create_sample_results(results_csv_file, means=[0.55, 0.75, 0.95], stds=[0.04, 0.16, 0.64])
     create_table1_table2(results_csv_file.replace(".csv", "-sample.csv"))
