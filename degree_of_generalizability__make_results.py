@@ -77,28 +77,28 @@ def create_results(voters:int, mean:float, std:float, distribution:callable, num
     }
 
 
-def run_experiment_truncnorm(folder, backup_folder):
+def run_experiment_truncnorm(folder, backup_folder, min_prob=0.501):
     """
-    The experiment from the original submission
+    The experiment from the original submission: truncated-normal with min_prob = 0.501.
+    The experiment from the second revision: truncated-normal with min_prob = 0.001.
     """
-    filename = f"{num_of_iterations}iters-truncnorm.csv"
+    filename = f"{num_of_iterations}iters-truncnorm{min_prob}.csv"
     experiment = experiments_csv.Experiment(folder, filename, backup_folder)
     experiment.logger.setLevel(logging.INFO)
 
-    input_ranges_original_submission = {
+    input_ranges = {
         "voters": [3, 5, 7, 9, 11, 21, 31, 41, 51],
         "mean": [.55, .6, 0.65,
                 .7, .75,  .8,
                 .85, .9,  0.95],
-        "std": [0.02, 0.04,
+        "std": [0.01, 0.02, 0.04,
                 0.08, 0.16, 0.32,
                 0.64, 1.28, 2.56],
         "distribution": [
-            expertise_levels.TruncNorm(0.501,0.999),
-            expertise_levels.TruncNorm(0.001,0.999),
+            expertise_levels.TruncNorm(min_prob,0.999),
             ],
     }
-    experiment.run(create_results, input_ranges_original_submission)
+    experiment.run(create_results, input_ranges)
 
 def run_experiment_uniform(folder, backup_folder):
     """
@@ -149,11 +149,13 @@ if __name__ == "__main__":
 
     logger.addHandler(logging.StreamHandler())
     logger.setLevel(logging.INFO)
-    # logger.setLevel(logging.DEBUG)  # to log the committeesx
+    # logger.setLevel(logging.DEBUG)  # to log the committees
 
     folder = "degree_of_generalizability__results/"
     backup_folder = f"{folder}backups/"
 
-    # run_experiment_truncnorm(folder, backup_folder)
+    run_experiment_truncnorm(folder, backup_folder, min_prob=0.501)
     run_experiment_uniform(folder, backup_folder)
     run_experiment_beta(folder, backup_folder)
+    run_experiment_truncnorm(folder, backup_folder, min_prob=0.001)  # Added for last revision
+
